@@ -1,0 +1,7 @@
+# Root .gitignore
+node_modules/
+.env
+.DS_Store
+.next/
+dist/
+coverage/
