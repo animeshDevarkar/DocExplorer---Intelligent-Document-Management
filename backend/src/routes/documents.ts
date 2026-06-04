@@ -71,62 +71,106 @@ documentsRouter.post('/upload', async (c) => {
         // ---------------------------------------------------------
         // RAG PIPELINE: Extract text, chunk, embed, and save to DB
         // ---------------------------------------------------------
-        // We run this synchronously for the MVP so the user knows if it fails,
-        // but in production this should be a background queue worker.
-        try {
-            const { processPDF } = await import('../lib/pdf-processor');
-            const { generateEmbedding } = await import('../lib/embeddings');
-            const crypto = await import('crypto');
+        // We run this asynchronously so the user gets an instant upload response!
+        (async () => {
+            try {
+                const { processPDF } = await import('../lib/pdf-processor');
+                const { generateEmbedding } = await import('../lib/embeddings');
+                const crypto = await import('crypto');
 
-            // Extract and chunk
-            const chunks = await processPDF(buffer);
+                // Extract and chunk
+                const chunks = await processPDF(buffer);
 
-            // Generate embeddings and save to pgvector sequentially to respect API rate limits
-            for (const chunk of chunks) {
-                const embedding = await generateEmbedding(chunk.content);
-                
-                // Prisma requires $executeRaw for pgvector insertions
-                await prisma.$executeRaw`
-                  INSERT INTO "document_chunks" (id, "document_id", "user_id", "chunk_index", content, "content_length", "page_number", embedding)
-                  VALUES (
-                    ${crypto.randomUUID()}, 
-                    ${document.id}, 
-                    ${user.id},
-                    1,
-                    ${chunk.content}, 
-                    ${chunk.content.length},
-                    ${chunk.pageNumber}, 
-                    ${embedding}::vector
-                  )
-                `;
+                const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+                // Generate embeddings and save to pgvector sequentially to respect API rate limits
+                for (const chunk of chunks) {
+                    let embedding;
+                    let retries = 3;
+                    while (retries > 0) {
+                        try {
+                            embedding = await generateEmbedding(chunk.content);
+                            // Add a small delay to prevent hitting 100 RPM limit instantly
+                            await sleep(650);
+                            break;
+                        } catch (err: any) {
+                            if (err.status === 429) {
+                                console.warn("Gemini API Rate limit hit! Pausing for 35 seconds...");
+                                await sleep(35000);
+                                retries--;
+                            } else {
+                                throw err;
+                            }
+                        }
+                    }
+                    if (!embedding) throw new Error("Failed to generate embedding after retries");
+                    
+                    // Prisma requires $executeRaw for pgvector insertions
+                    await prisma.$executeRaw`
+                      INSERT INTO "document_chunks" (id, "document_id", "user_id", "chunk_index", content, "content_length", "page_number", embedding)
+                      VALUES (
+                        ${crypto.randomUUID()}, 
+                        ${document.id}, 
+                        ${user.id},
+                        1,
+                        ${chunk.content}, 
+                        ${chunk.content.length},
+                        ${chunk.pageNumber}, 
+                        ${embedding}::vector
+                      )
+                    `;
+                }
+
+                // Generate AI Summary using the first 5000 characters
+                let documentSummary = "Summary could not be generated.";
+                try {
+                    const { GoogleGenAI } = await import('@google/genai');
+                    if (process.env.GEMINI_API_KEY) {
+                        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+                        // Combine first few chunks for context
+                        const initialText = chunks.map(c => c.content).join('\n').slice(0, 5000);
+                        
+                        const response = await ai.models.generateContent({
+                            model: 'gemini-2.5-flash',
+                            contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${initialText}`,
+                            config: { temperature: 0.3 }
+                        });
+                        
+                        if (response.text) {
+                            documentSummary = response.text;
+                        }
+                    }
+                } catch (summaryError) {
+                    console.error("Summary generation failed:", summaryError);
+                }
+
+                // Mark document as ready and save summary
+                await prisma.document.update({
+                    where: { id: document.id },
+                    data: { 
+                        status: 'ready',
+                        summary: documentSummary
+                    }
+                });
+
+            } catch (ragError) {
+                console.error("RAG Pipeline Error:", ragError);
+                // Mark as failed
+                await prisma.document.update({
+                    where: { id: document.id },
+                    data: { status: 'error' }
+                });
             }
+        })().catch(console.error);
 
-            // Mark document as ready
-            await prisma.document.update({
-                where: { id: document.id },
-                data: { status: 'ready' }
-            });
-
-            // Re-fetch to return the ready document
-            const finalDoc = await prisma.document.findUnique({ where: { id: document.id } });
-            
-            return c.json({ 
-                success: true, 
-                document: {
-                    ...finalDoc,
-                    fileSizeBytes: Number(finalDoc?.fileSizeBytes)
-                } 
-            });
-
-        } catch (ragError) {
-            console.error("RAG Pipeline Error:", ragError);
-            // Mark as failed
-            await prisma.document.update({
-                where: { id: document.id },
-                data: { status: 'error' }
-            });
-            return c.json({ error: 'Document uploaded, but failed to process AI embeddings.' }, 500);
-        }
+        // Return immediately while the RAG pipeline runs in the background
+        return c.json({ 
+            success: true, 
+            document: {
+                ...document,
+                fileSizeBytes: Number(document.fileSizeBytes)
+            } 
+        });
 
     } catch (error) {
         console.error('Upload error:', error);

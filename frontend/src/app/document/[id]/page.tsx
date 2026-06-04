@@ -17,6 +17,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [language, setLanguage] = useState("English");
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -84,7 +85,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
       const res = await fetch("http://localhost:3001/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg, documentId }),
+        body: JSON.stringify({ message: userMsg, documentId, language }),
         credentials: "include"
       });
 
@@ -123,7 +124,21 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
             <h1 className="font-semibold truncate max-w-[300px]">Document Analysis</h1>
           </div>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-4">
+          <select 
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="bg-background text-foreground text-sm border border-border rounded-md px-3 py-1.5 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-colors shadow-sm"
+          >
+            <option value="English" className="bg-background text-foreground">🇬🇧 English</option>
+            <option value="Spanish" className="bg-background text-foreground">🇪🇸 Spanish</option>
+            <option value="French" className="bg-background text-foreground">🇫🇷 French</option>
+            <option value="German" className="bg-background text-foreground">🇩🇪 German</option>
+            <option value="Chinese" className="bg-background text-foreground">🇨🇳 Chinese</option>
+            <option value="Hindi" className="bg-background text-foreground">🇮🇳 Hindi</option>
+          </select>
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* Main Layout */}

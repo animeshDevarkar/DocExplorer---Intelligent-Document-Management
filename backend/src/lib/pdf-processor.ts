@@ -13,8 +13,8 @@ export const processPDF = async (pdfBuffer: Buffer): Promise<DocumentChunkResult
 
     // Use Langchain's RecursiveCharacterTextSplitter to create optimal chunks
     const splitter = new RecursiveCharacterTextSplitter({
-        chunkSize: 1000,
-        chunkOverlap: 200,
+        chunkSize: 4000,
+        chunkOverlap: 400,
     });
 
     const chunks = await splitter.createDocuments([text]);

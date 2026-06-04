@@ -129,7 +129,7 @@ export default function ChatHistoryPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {sessions.map((sess) => (
-                <Link href={`/document/${sess.documentId}`} key={sess.id}>
+                <Link href={sess.documentId ? `/document/${sess.documentId}` : `/compare?sessionId=${sess.id}`} key={sess.id}>
                   <div className="group bg-card border border-border rounded-xl p-5 hover:border-primary/50 hover:shadow-md transition-all cursor-pointer flex flex-col h-full relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-1 h-full bg-primary/50 group-hover:bg-primary transition-colors"></div>
                     
@@ -141,7 +141,7 @@ export default function ChatHistoryPage() {
                     </div>
 
                     <h3 className="font-semibold text-foreground mb-1">
-                      {sess.document?.title || "Unknown Document"}
+                      {sess.title || sess.document?.title || "Multiple Documents"}
                     </h3>
                     
                     <div className="mt-auto pt-4 flex justify-between items-center text-xs text-muted-foreground border-t border-border/50">

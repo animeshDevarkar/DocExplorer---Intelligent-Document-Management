@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UploadModal } from "@/components/upload-modal";
-import { FileText, Search, Plus, Settings, LogOut, MessageSquare, Loader2, Trash2 } from "lucide-react";
+import { FileText, Search, Plus, Settings, LogOut, MessageSquare, Loader2, Trash2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -13,6 +13,8 @@ export default function DashboardPage() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [compareMode, setCompareMode] = useState(false);
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const { data: session } = authClient.useSession();
   
   const fetchDocuments = async () => {
@@ -37,6 +39,17 @@ export default function DashboardPage() {
     fetchDocuments();
   }, []);
 
+  // Poll for updates if any document is processing
+  useEffect(() => {
+    const isProcessing = documents.some((doc) => doc.status === 'processing');
+    if (isProcessing) {
+      const interval = setInterval(() => {
+        fetchDocuments();
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [documents]);
+
   const handleSignOut = async () => {
       await authClient.signOut();
       router.push("/login");
@@ -57,6 +70,19 @@ export default function DashboardPage() {
         <div className="flex-1 overflow-y-auto py-6 flex flex-col gap-1 px-3">
           <button className="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-md font-medium text-sm">
             <FileText className="w-4 h-4" /> My Documents
+          </button>
+          <button 
+            onClick={() => {
+              setCompareMode(!compareMode);
+              setSelectedDocs([]);
+            }}
+            className={`flex items-center gap-3 px-3 py-2 rounded-md font-medium text-sm transition-colors ${
+              compareMode 
+                ? 'bg-purple-500/20 text-purple-500 border border-purple-500/30' 
+                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Settings className="w-4 h-4" /> Compare Mode
           </button>
           <Link href="/dashboard/chats" className="flex items-center gap-3 px-3 py-2 hover:bg-muted text-muted-foreground hover:text-foreground rounded-md font-medium text-sm transition-colors">
             <MessageSquare className="w-4 h-4" /> Chat History
@@ -126,11 +152,45 @@ export default function DashboardPage() {
                  <button onClick={() => setIsUploadOpen(true)} className="text-primary text-sm mt-2 font-medium hover:underline">Upload your first PDF</button>
              </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {documents.map((doc) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative">
+              {documents.map((doc) => {
+                const isSelected = selectedDocs.includes(doc.id);
+                
+                return (
                 <div key={doc.id} className="relative group perspective-1000">
-                  <Link href={`/document/${doc.id}`} className="block h-full">
-                    <div className="relative bg-card/60 backdrop-blur-md border border-border/60 rounded-2xl p-5 hover:border-primary/40 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:hover:shadow-[0_8px_30px_rgba(99,102,241,0.15)] transition-all duration-300 cursor-pointer flex flex-col h-full overflow-hidden group-hover:-translate-y-1">
+                  <div 
+                    onClick={(e) => {
+                      if (compareMode) {
+                        e.preventDefault();
+                        if (isSelected) {
+                          setSelectedDocs(prev => prev.filter(id => id !== doc.id));
+                        } else {
+                          if (selectedDocs.length >= 4) {
+                            alert("You can only compare up to 4 documents at a time.");
+                            return;
+                          }
+                          setSelectedDocs(prev => [...prev, doc.id]);
+                        }
+                      } else {
+                        router.push(`/document/${doc.id}`);
+                      }
+                    }}
+                    className="block h-full cursor-pointer"
+                  >
+                    <div className={`relative bg-card/60 backdrop-blur-md border rounded-2xl p-5 transition-all duration-300 flex flex-col h-full overflow-hidden ${
+                      compareMode && isSelected
+                        ? 'border-purple-500 ring-2 ring-purple-500/50 shadow-[0_8px_30px_rgba(168,85,247,0.2)] scale-[1.02]'
+                        : 'border-border/60 hover:border-primary/40 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] group-hover:-translate-y-1'
+                    }`}>
+                      
+                      {/* Checkbox overlay for compare mode */}
+                      {compareMode && (
+                        <div className={`absolute top-4 left-4 w-6 h-6 rounded-full border-2 z-30 flex items-center justify-center transition-colors ${
+                          isSelected ? 'bg-purple-500 border-purple-500' : 'border-muted-foreground/50 bg-background/50 backdrop-blur-sm'
+                        }`}>
+                          {isSelected && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+                        </div>
+                      )}
                       
                       {/* Subtle background glow effect on hover */}
                       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -151,23 +211,44 @@ export default function DashboardPage() {
                         <h3 className="font-semibold text-foreground truncate text-base mb-1 group-hover:text-primary transition-colors">
                           {doc.title}
                         </h3>
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium uppercase tracking-wider">
-                            PDF
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {(doc.fileSizeBytes / (1024 * 1024)).toFixed(2)} MB
-                          </span>
-                        </div>
-                        <div className="mt-auto flex justify-between items-center text-xs text-muted-foreground border-t border-border/40 pt-3">
-                          <span>{new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                          <span className="font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0 duration-300">
-                            Open Doc &rarr;
-                          </span>
-                        </div>
+                        
+                        {doc.status === 'processing' ? (
+                          <div className="flex-1 flex flex-col items-center justify-center py-4">
+                            <Loader2 className="w-6 h-6 animate-spin text-primary mb-2" />
+                            <span className="text-xs font-medium text-primary animate-pulse">Processing AI...</span>
+                          </div>
+                        ) : doc.status === 'error' ? (
+                          <div className="flex-1 flex flex-col items-center justify-center py-4">
+                            <span className="text-xs font-medium text-destructive">AI Processing Failed</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium uppercase tracking-wider">
+                                PDF
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {(doc.fileSizeBytes / (1024 * 1024)).toFixed(2)} MB
+                              </span>
+                            </div>
+                            
+                            {doc.summary && (
+                              <div className="mb-3 text-xs text-muted-foreground/80 line-clamp-3 leading-relaxed">
+                                {doc.summary}
+                              </div>
+                            )}
+                            
+                            <div className="mt-auto flex justify-between items-center text-xs text-muted-foreground border-t border-border/40 pt-3">
+                              <span>{new Date(doc.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                              <span className="font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0 duration-300">
+                                {compareMode ? (isSelected ? 'Selected' : 'Select to Compare') : 'Summarize & Chat \u2192'}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
-                  </Link>
+                  </div>
 
                   {/* Delete Button (Floats above everything) */}
                   <button 
@@ -193,10 +274,26 @@ export default function DashboardPage() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
+
+        {/* Floating Compare Action Bar */}
+        {compareMode && selectedDocs.length > 1 && (
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-card border border-border rounded-full shadow-2xl px-6 py-3 flex items-center gap-6 animate-in slide-in-from-bottom-8 fade-in z-50">
+            <span className="text-sm font-medium">
+              <span className="text-purple-500 font-bold">{selectedDocs.length}</span> documents selected
+            </span>
+            <button 
+              onClick={() => router.push(`/compare?docs=${selectedDocs.join(',')}`)}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-full text-sm font-bold shadow-md transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+            >
+              Start Comparison <ArrowLeft className="w-4 h-4 rotate-180" />
+            </button>
+          </div>
+        )}
       </main>
 
       <UploadModal 

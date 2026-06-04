@@ -23,42 +23,45 @@ chatRouter.post('/', async (c) => {
     const user = c.get('user');
     
     try {
-        const { message, documentId } = await c.req.json();
+        const { message, documentId, documentIds, sessionId, language } = await c.req.json();
 
-        if (!message || !documentId) {
-            return c.json({ error: 'Message and documentId are required' }, 400);
+        if (!message || (!documentId && (!documentIds || documentIds.length === 0))) {
+            return c.json({ error: 'Message and document ID(s) are required' }, 400);
         }
 
         if (!ai) {
             return c.json({ error: 'AI is not configured.' }, 500);
         }
 
-        // 1. Verify user owns the document
-        const document = await prisma.document.findUnique({
-            where: { id: documentId, userId: user.id }
+        // 1. Verify user owns the document(s)
+        const targetIds = documentIds && documentIds.length > 0 ? documentIds : [documentId];
+        const documents = await prisma.document.findMany({
+            where: { id: { in: targetIds }, userId: user.id }
         });
 
-        if (!document) {
-            return c.json({ error: 'Document not found' }, 404);
+        if (documents.length !== targetIds.length) {
+            return c.json({ error: 'One or more documents not found' }, 404);
         }
 
         // 2. Generate vector embedding for the user's query
         const queryEmbedding = await generateEmbedding(message);
 
-        // 3. Perform Vector Similarity Search (pgvector) to find top 3 most relevant chunks
+        // 3. Perform Vector Similarity Search across all selected documents
         const similarChunks = await prisma.$queryRaw<Array<{ content: string }>>`
             SELECT content
             FROM "document_chunks"
-            WHERE "document_id" = ${document.id}
+            WHERE "document_id" = ANY(${targetIds})
             ORDER BY embedding <-> ${queryEmbedding}::vector
-            LIMIT 4;
+            LIMIT ${targetIds.length > 1 ? 6 : 4};
         `;
 
         // 4. Construct the prompt context
         const contextText = similarChunks.map(chunk => chunk.content).join('\n\n---\n\n');
         
-        const systemInstruction = `You are DocExplorer AI, an intelligent assistant helping a user understand their PDF document titled "${document.title}".
+        const systemInstruction = `You are DocExplorer AI, an intelligent assistant helping a user understand their documents.
 Always base your answers strictly on the provided DOCUMENT CONTEXT. If the answer cannot be found in the context, politely state that you do not have enough information from the document to answer.
+
+CRITICAL REQUIREMENT: You MUST reply entirely in the following language: ${language || 'English'}. No matter what language the document is in or what language the prompt is in, your response MUST be in ${language || 'English'}.
 
 DOCUMENT CONTEXT:
 ${contextText}`;
@@ -74,16 +77,22 @@ ${contextText}`;
         });
 
         // Save message to chat history
-        let session = await prisma.chatSession.findFirst({
-            where: { documentId: document.id, userId: user.id }
-        });
-
+        let session;
+        if (sessionId) {
+            session = await prisma.chatSession.findUnique({ where: { id: sessionId } });
+        } else if (targetIds.length === 1) {
+            session = await prisma.chatSession.findFirst({
+                where: { documentId: targetIds[0], userId: user.id }
+            });
+        }
+        
         if (!session) {
             session = await prisma.chatSession.create({
                 data: {
                     userId: user.id,
-                    documentId: document.id,
-                    title: "Chat for " + document.title
+                    documentId: targetIds.length === 1 ? targetIds[0] : null,
+                    documentIds: targetIds.length > 1 ? targetIds : [],
+                    title: targetIds.length > 1 ? "Comparing Multiple Documents" : "Chat for " + documents[0].title
                 }
             });
         }
@@ -106,7 +115,7 @@ ${contextText}`;
             }
         });
 
-        return c.json({ answer: response.text });
+        return c.json({ answer: response.text, sessionId: session.id });
 
     } catch (error: any) {
         console.error("Chat error:", error);
@@ -120,8 +129,16 @@ chatRouter.get('/:documentId', async (c) => {
     const documentId = c.req.param('documentId');
     
     try {
-        const session = await prisma.chatSession.findFirst({
-            where: { documentId: documentId, userId: user.id },
+        // If documentId is a sessionId (for multi-doc), fetch by ID. 
+        // We can just query by either documentId or sessionId.
+        let session = await prisma.chatSession.findFirst({
+            where: { 
+                OR: [
+                    { documentId: documentId },
+                    { id: documentId } // in case frontend passes sessionId
+                ],
+                userId: user.id 
+            },
             include: {
                 messages: {
                     orderBy: { createdAt: 'asc' }
@@ -129,7 +146,24 @@ chatRouter.get('/:documentId', async (c) => {
             }
         });
 
-        if (!session) {
+        if (!session || session.messages.length === 0) {
+            // Fetch the document to get the summary
+            const doc = await prisma.document.findUnique({
+                where: { id: documentId, userId: user.id }
+            });
+
+            if (doc && doc.summary) {
+                return c.json({ 
+                    messages: [
+                        { 
+                            id: "intro", 
+                            role: "assistant", 
+                            content: `Here is a summary of the document to get us started:\n\n${doc.summary}\n\nWhat else would you like to know?` 
+                        }
+                    ] 
+                });
+            }
+
             return c.json({ messages: [] });
         }
 
