@@ -1,7 +1,13 @@
+"use client";
+
+import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
+import { DemoModal } from "@/components/demo-modal";
 
 export default function Home() {
+  const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header */}
@@ -53,7 +59,10 @@ export default function Home() {
               Start Exploring for Free
             </button>
           </Link>
-          <button className="h-12 px-8 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 font-medium text-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+          <button 
+            onClick={() => setIsDemoModalOpen(true)}
+            className="h-12 px-8 rounded-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 font-medium text-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
             View Live Demo
           </button>
         </div>
@@ -63,6 +72,9 @@ export default function Home() {
       <footer className="border-t border-gray-200 dark:border-gray-800 py-8 text-center text-gray-500 text-sm">
         <p>© 2026 DocExplorer AI. All rights reserved.</p>
       </footer>
+
+      {/* Demo Modal Slider */}
+      <DemoModal isOpen={isDemoModalOpen} onClose={() => setIsDemoModalOpen(false)} />
     </div>
   );
 }
