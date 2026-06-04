@@ -19,7 +19,7 @@ export default function DashboardPage() {
   
   const fetchDocuments = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}`}/api/documents`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ``}/api/documents`, {
         credentials: "include"
       });
       if (res.ok) {
@@ -256,7 +256,7 @@ export default function DashboardPage() {
                       e.preventDefault();
                       if (confirm("Are you sure you want to delete this document?")) {
                         try {
-                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}`}/api/documents/${doc.id}`, {
+                          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ``}/api/documents/${doc.id}`, {
                             method: 'DELETE',
                             credentials: 'include'
                           });

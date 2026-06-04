@@ -37,7 +37,7 @@ function CompareChat() {
       // Fetch chat history
       const fetchHistory = async () => {
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}`}/api/chat/${initialSessionId}`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ``}/api/chat/${initialSessionId}`, {
             credentials: "include"
           });
           if (res.ok) {
@@ -57,7 +57,7 @@ function CompareChat() {
       const generateInitialComparison = async () => {
         setIsLoading(true);
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}`}/api/chat`, {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ``}/api/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
@@ -106,7 +106,7 @@ function CompareChat() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}`}/api/chat`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ``}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
