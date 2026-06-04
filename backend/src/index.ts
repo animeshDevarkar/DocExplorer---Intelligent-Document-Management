@@ -7,7 +7,7 @@ import { auth } from './auth'
 const app = new Hono()
 
 app.use('*', cors({
-  origin: 'http://localhost:3000',
+  origin: (origin) => origin || 'http://localhost:3000',
   allowHeaders: ['Content-Type', 'Authorization'],
   allowMethods: ['POST', 'GET', 'OPTIONS', 'DELETE', 'PUT'],
   exposeHeaders: ['Content-Length'],
