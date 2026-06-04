@@ -213,7 +213,7 @@ function CompareChat() {
                         ? 'bg-primary text-primary-foreground rounded-tr-sm' 
                         : 'bg-card border border-border text-foreground rounded-tl-sm'
                     }`}>
-                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                     </div>
 
                     {msg.role === 'user' && (

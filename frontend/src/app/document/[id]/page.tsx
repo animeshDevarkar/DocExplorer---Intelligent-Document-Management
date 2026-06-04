@@ -184,7 +184,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
                         ? 'bg-primary text-primary-foreground rounded-tr-sm' 
                         : 'bg-muted border border-border text-foreground rounded-tl-sm'
                     }`}>
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{msg.content}</p>
                     </div>
 
                     {msg.role === 'user' && (
