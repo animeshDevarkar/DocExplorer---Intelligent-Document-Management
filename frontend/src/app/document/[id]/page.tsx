@@ -26,7 +26,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
 
   // Fetch document details
   useEffect(() => {
-    fetch(`http://localhost:3001/api/documents/${documentId}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/documents/${documentId}`, {
       credentials: "include"
     })
       .then(res => res.json())
@@ -41,7 +41,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
   // Fetch chat history
   useEffect(() => {
     setIsHistoryLoading(true);
-    fetch(`http://localhost:3001/api/chat/${documentId}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/chat/${documentId}`, {
       credentials: "include"
     })
       .then(res => res.json())
@@ -82,7 +82,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
     setIsLoading(true);
 
     try {
-      const res = await fetch("http://localhost:3001/api/chat", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMsg, documentId, language }),

@@ -138,7 +138,7 @@ export default function SettingsPage() {
                       formData.append("file", file);
                       
                       try {
-                        const res = await fetch("http://localhost:3001/api/users/avatar", {
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}`}/api/users/avatar`, {
                           method: "POST",
                           body: formData,
                           credentials: "include"
