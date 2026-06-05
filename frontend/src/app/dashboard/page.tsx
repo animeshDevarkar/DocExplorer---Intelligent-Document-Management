@@ -15,7 +15,13 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: session } = authClient.useSession();
+  
+  const filteredDocuments = documents.filter(doc => 
+    doc.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (doc.summary && doc.summary.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
   
   const fetchDocuments = async () => {
     try {
@@ -110,6 +116,8 @@ export default function DashboardPage() {
               type="text" 
               placeholder="Search documents..." 
               className="bg-transparent border-none outline-none w-full text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           
@@ -151,9 +159,15 @@ export default function DashboardPage() {
                  <p className="text-muted-foreground font-medium">No documents yet</p>
                  <button onClick={() => setIsUploadOpen(true)} className="text-primary text-sm mt-2 font-medium hover:underline">Upload your first PDF</button>
              </div>
+          ) : filteredDocuments.length === 0 ? (
+             <div className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-border rounded-xl">
+                 <Search className="w-12 h-12 text-muted-foreground opacity-50 mb-4" />
+                 <p className="text-muted-foreground font-medium">No matching documents found</p>
+                 <button onClick={() => setSearchQuery("")} className="text-primary text-sm mt-2 font-medium hover:underline">Clear search</button>
+             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative">
-              {documents.map((doc) => {
+              {filteredDocuments.map((doc) => {
                 const isSelected = selectedDocs.includes(doc.id);
                 
                 return (
