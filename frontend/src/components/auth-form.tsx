@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { signIn, signUp } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 export function AuthForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -18,18 +20,20 @@ export function AuthForm() {
     
     try {
       if (isLogin) {
-        await signIn.email({
+        const { data, error: signInError } = await signIn.email({
             email,
             password,
-            callbackURL: "/dashboard"
         });
+        if (signInError) throw new Error(signInError.message || "Invalid credentials.");
+        router.push("/dashboard");
       } else {
-        await signUp.email({
+        const { data, error: signUpError } = await signUp.email({
             email,
             password,
             name,
-            callbackURL: "/dashboard"
         });
+        if (signUpError) throw new Error(signUpError.message || "Failed to create account.");
+        router.push("/dashboard");
       }
     } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred during authentication.");
