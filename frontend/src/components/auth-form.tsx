@@ -25,7 +25,7 @@ export function AuthForm() {
             password,
         });
         if (signInError) throw new Error(signInError.message || "Invalid credentials.");
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       } else {
         const { data, error: signUpError } = await signUp.email({
             email,
@@ -33,7 +33,7 @@ export function AuthForm() {
             name,
         });
         if (signUpError) throw new Error(signUpError.message || "Failed to create account.");
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       }
     } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred during authentication.");
