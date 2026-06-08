@@ -1,31 +1,20 @@
-import { GoogleGenAI } from '@google/genai';
-
-export const getGeminiKeys = () => {
-    return [
-        process.env.GEMINI_API_KEY,
-        process.env.GEMINI_API_KEY_1,
-        process.env.GEMINI_API_KEY_2,
-        process.env.GEMINI_API_KEY_3,
-        process.env.GEMINI_API_KEY_4,
-        process.env.GEMINI_API_KEY_5
-    ].filter(Boolean) as string[];
+    if (keys.length === 0) {
+        // Fallback to summary keys if no chat keys are explicitly set
+        return getSummaryClient();
+    }
+    return new GoogleGenAI({ apiKey: keys[chatKeyIndex], apiVersion: 'v1' });
 };
 
-export let currentKeyIndex = 0;
-
-export const getGeminiClient = () => {
-    const keys = getGeminiKeys();
-    if (keys.length === 0) return null;
-    return new GoogleGenAI({ apiKey: keys[currentKeyIndex], apiVersion: 'v1' });
-};
-
-export const rotateGeminiKey = () => {
-    const keys = getGeminiKeys();
+export const rotateChatKey = () => {
+    const keys = getChatKeys();
     if (keys.length > 1) {
-        currentKeyIndex = (currentKeyIndex + 1) % keys.length;
-        console.warn(`[Gemini Auth] Quota exhausted! Rotated to API key index ${currentKeyIndex + 1}/${keys.length}`);
+        chatKeyIndex = (chatKeyIndex + 1) % keys.length;
+        console.warn(`[Gemini Auth] Quota exhausted! Rotated CHAT key to index ${chatKeyIndex + 1}/${keys.length}`);
         return true;
     }
-    console.warn(`[Gemini Auth] Quota exhausted, but no backup keys available in environment.`);
+    // If falling back to summary keys, we should rotate those
+    if (keys.length === 0) {
+        return rotateSummaryKey();
+    }
     return false;
 };

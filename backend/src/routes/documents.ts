@@ -4,7 +4,7 @@ import { auth } from '../auth.js';
 import { uploadDocument } from '../lib/cloudinary.js';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { generateEmbedding } from '../lib/embeddings.js';
-import { getGeminiClient, rotateGeminiKey } from '../lib/geminiAuth.js';
+import { getSummaryClient, rotateSummaryKey } from '../lib/geminiAuth.js';
 import { v2 as cloudinary } from 'cloudinary';
 import crypto from 'crypto';
 
@@ -130,60 +130,11 @@ documentsRouter.post('/upload', async (c) => {
                     `;
                 }
 
-                // Generate AI Summary using the first 5000 characters
-                let documentSummary = "Summary could not be generated.";
-                try {
-                    const ai = getGeminiClient();
-                    if (ai) {
-                        // Combine first few chunks for context
-                        const initialText = chunks.map(c => c.content).join('\n').slice(0, 5000);
-                        
-                        let summaryRetries = 3;
-                        while (summaryRetries > 0) {
-                            try {
-                                const response = await ai.models.generateContent({
-                                    model: 'gemini-2.0-flash',
-                                    contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${initialText}`,
-                                    config: { 
-                                        temperature: 0.3,
-                                        maxOutputTokens: 300 
-                                    }
-                                });
-                                
-                                if (response.text) {
-                                    documentSummary = response.text;
-                                }
-                                break;
-                            } catch (summaryError: any) {
-                                const status = summaryError.status || (summaryError.error && summaryError.error.code);
-                                const errMsg = (summaryError.message || '').toLowerCase();
-                                const isRateLimit = status === 429 || status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('exhausted');
-                                
-                                if (isRateLimit && summaryRetries > 1) {
-                                    if (rotateGeminiKey()) {
-                                        console.warn("Retrying summary generation with backup API key...");
-                                    } else {
-                                        console.warn("Summary generation rate limit hit! Pausing for 50 seconds...");
-                                        await new Promise(resolve => setTimeout(resolve, 50000));
-                                    }
-                                    summaryRetries--;
-                                } else {
-                                    console.error("Summary generation failed:", summaryError);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                } catch (summaryError) {
-                    console.error("Summary error:", summaryError);
-                }
-
-                // Mark document as ready and save summary
+                // Mark document as ready (Summarization is now lazy and on-demand)
                 await prisma.document.update({
                     where: { id: document.id },
                     data: { 
-                        status: 'ready',
-                        summary: documentSummary
+                        status: 'ready'
                     }
                 });
 
@@ -287,6 +238,90 @@ documentsRouter.delete('/:id', async (c) => {
     } catch (error) {
         console.error("Delete document error:", error);
         return c.json({ error: 'Failed to delete document' }, 500);
+    }
+});
+
+documentsRouter.post('/:id/summarize', async (c) => {
+    const user = c.get('user');
+    const documentId = c.req.param('id');
+
+    try {
+        const document = await prisma.document.findUnique({
+            where: { id: documentId, userId: user.id },
+            include: { chunks: true }
+        });
+
+        if (!document) {
+            return c.json({ error: 'Document not found' }, 404);
+        }
+
+        if (document.summary) {
+            // Cache hit
+            return c.json({ summary: document.summary });
+        }
+
+        const ai = getSummaryClient();
+        if (!ai) {
+            return c.json({ error: 'AI summary client not configured.' }, 500);
+        }
+
+        // Combine chunks and strictly truncate to ~500 words to save tokens
+        const extractedText = document.chunks.map(c => c.content).join(' ');
+        const truncatedText = extractedText
+            .replace(/\s+/g, ' ')
+            .trim()
+            .split(' ')
+            .slice(0, 500)
+            .join(' ');
+
+        let documentSummary = "Summary could not be generated.";
+        let summaryRetries = 3;
+        while (summaryRetries > 0) {
+            try {
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.0-flash',
+                    contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${truncatedText}`,
+                    config: { 
+                        temperature: 0.3,
+                        maxOutputTokens: 300 
+                    }
+                });
+                
+                if (response.text) {
+                    documentSummary = response.text;
+                }
+                break;
+            } catch (summaryError: any) {
+                const status = summaryError.status || (summaryError.error && summaryError.error.code);
+                const errMsg = (summaryError.message || '').toLowerCase();
+                const isRateLimit = status === 429 || status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('exhausted');
+                
+                if (isRateLimit && summaryRetries > 1) {
+                    if (rotateSummaryKey()) {
+                        console.warn("Retrying summary generation with backup API key...");
+                    } else {
+                        console.warn("Summary generation rate limit hit! Pausing for 50 seconds...");
+                        await new Promise(resolve => setTimeout(resolve, 50000));
+                    }
+                    summaryRetries--;
+                } else {
+                    console.error("Summary generation failed:", summaryError);
+                    break;
+                }
+            }
+        }
+
+        // Cache the summary in the database
+        await prisma.document.update({
+            where: { id: document.id },
+            data: { summary: documentSummary }
+        });
+
+        return c.json({ summary: documentSummary });
+
+    } catch (error) {
+        console.error("Summarization error:", error);
+        return c.json({ error: 'Failed to generate summary' }, 500);
     }
 });
 

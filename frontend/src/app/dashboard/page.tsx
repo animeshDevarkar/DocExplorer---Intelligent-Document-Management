@@ -61,6 +61,28 @@ export default function DashboardPage() {
       router.push("/login");
   };
 
+  const [summarizingId, setSummarizingId] = useState<string | null>(null);
+
+  const handleGenerateSummary = async (e: React.MouseEvent, docId: string) => {
+    e.stopPropagation();
+    setSummarizingId(docId);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ``}/api/documents/${docId}/summarize`, {
+        method: 'POST',
+        credentials: "include"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Update the document in state
+        setDocuments(prev => prev.map(doc => doc.id === docId ? { ...doc, summary: data.summary } : doc));
+      }
+    } catch (err) {
+      console.error("Failed to generate summary", err);
+    } finally {
+      setSummarizingId(null);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-background text-foreground">
       
@@ -246,9 +268,23 @@ export default function DashboardPage() {
                               </span>
                             </div>
                             
-                            {doc.summary && (
+                            {doc.summary ? (
                               <div className="mb-3 text-xs text-muted-foreground/80 line-clamp-3 leading-relaxed">
                                 {doc.summary}
+                              </div>
+                            ) : (
+                              <div className="mb-3">
+                                <button 
+                                  onClick={(e) => handleGenerateSummary(e, doc.id)}
+                                  disabled={summarizingId === doc.id}
+                                  className="w-full text-center py-2 bg-primary/10 text-primary text-xs font-semibold rounded-md hover:bg-primary/20 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                  {summarizingId === doc.id ? (
+                                    <><Loader2 className="w-3 h-3 animate-spin" /> Generating...</>
+                                  ) : (
+                                    "Generate AI Summary"
+                                  )}
+                                </button>
                               </div>
                             )}
                             

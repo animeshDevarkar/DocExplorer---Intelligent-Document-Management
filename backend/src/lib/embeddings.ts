@@ -1,12 +1,12 @@
 import { GoogleGenAI } from '@google/genai';
-import { getGeminiClient, rotateGeminiKey } from './geminiAuth.js';
+import { getSummaryClient, rotateSummaryKey } from './geminiAuth.js';
 
 // Initialize Gemini API client
 // Use dynamic client
 let ai: GoogleGenAI | null = null;
 
 try {
-    ai = getGeminiClient();
+    ai = getSummaryClient();
 } catch (e) {
     console.warn("Gemini API Key not found. Vector embeddings will fail until configured.");
 }
@@ -16,7 +16,7 @@ try {
  * using Google's text-embedding-004 model.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-    const currentAi = getGeminiClient();
+    const currentAi = getSummaryClient();
     if (!currentAi) {
         throw new Error("Gemini API Client not initialized. Check GEMINI_API_KEY.");
     }
@@ -30,8 +30,8 @@ export async function generateEmbedding(text: string): Promise<number[]> {
         });
     } catch (e) {
         console.warn("Embedding failed, rotating key and retrying...");
-        rotateGeminiKey();
-        const retryAi = getGeminiClient();
+        rotateSummaryKey();
+        const retryAi = getSummaryClient();
         if (!retryAi) {
             throw new Error("Gemini API Client not initialized after rotation.");
         }
