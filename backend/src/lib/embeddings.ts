@@ -1,36 +1,53 @@
-import { pipeline } from '@xenova/transformers';
+import { GoogleGenAI } from '@google/genai';
+import { getSummaryClient, rotateSummaryKey } from './geminiAuth.js';
 
-class EmbeddingPipeline {
-    static task = 'feature-extraction' as const;
-    static model = 'Xenova/all-MiniLM-L6-v2';
-    static instance: any = null;
+// Initialize Gemini API client
+let ai: GoogleGenAI | null = null;
 
-    static async getInstance(progress_callback: any = null) {
-        if (this.instance === null) {
-            this.instance = pipeline(this.task, this.model, { progress_callback });
-        }
-        return this.instance;
-    }
+try {
+    ai = getSummaryClient();
+} catch (e) {
+    console.warn("Gemini API Key not found. Vector embeddings will fail until configured.");
 }
 
 /**
- * Generate a vector embedding for a given text chunk
- * using a local HuggingFace model (all-MiniLM-L6-v2).
- * This runs 100% locally with zero API limits or costs.
+ * Generate a 768-dimensional vector embedding for a given text chunk
+ * using Google's text-embedding-004 model.
  */
 export async function generateEmbedding(text: string): Promise<number[]> {
-    const extractor = await EmbeddingPipeline.getInstance();
+    const currentAi = getSummaryClient();
+    if (!currentAi) {
+        throw new Error("Gemini API Client not initialized. Check GEMINI_API_KEY.");
+    }
     
-    // Compute embeddings
-    const output = await extractor(text, { pooling: 'mean', normalize: true });
-    
-    // Extract values as standard number array
-    const values = Array.from(output.data) as number[];
+    let response;
+    try {
+        response = await currentAi.models.embedContent({
+            model: 'text-embedding-004',
+            contents: text
+        });
+    } catch (e) {
+        console.warn("Embedding failed, rotating key and retrying...");
+        rotateSummaryKey();
+        const retryAi = getSummaryClient();
+        if (!retryAi) {
+            throw new Error("Gemini API Client not initialized after rotation.");
+        }
+        response = await retryAi.models.embedContent({
+            model: 'text-embedding-004',
+            contents: text
+        });
+    }
+
+    if (!response.embeddings || response.embeddings.length === 0 || !response.embeddings[0].values) {
+        throw new Error("Failed to generate embedding from Gemini API.");
+    }
+
+    const values = response.embeddings[0].values;
     
     // The database column is strictly vector(1536).
-    // MiniLM-L6-v2 natively produces 384-d vectors. 
+    // text-embedding-004 produces 768-d vectors. 
     // We pad them with zeros to 1536 dimensions so they fit perfectly in the database.
-    // Mathematically, zero-padding preserves the cosine similarity identically.
     if (values.length < 1536) {
         return [...values, ...new Array(1536 - values.length).fill(0)];
     }

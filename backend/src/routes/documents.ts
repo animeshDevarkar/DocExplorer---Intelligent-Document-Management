@@ -83,13 +83,39 @@ documentsRouter.post('/upload', async (c) => {
                 // Extract and chunk
                 const chunks = await processPDF(buffer);
 
-                // Generate embeddings instantly using local Transformers.js model
+                const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+                // Generate embeddings sequentially to respect API rate limits
                 for (const chunk of chunks) {
                     // Sanitize null bytes from PDF extraction which crash PostgreSQL
                     const sanitizedContent = chunk.content.replace(/\\0/g, '');
                     
-                    const embedding = await generateEmbedding(sanitizedContent);
-                    if (!embedding) throw new Error("Failed to generate embedding");
+                    let embedding;
+                    let retries = 3;
+                    while (retries > 0) {
+                        try {
+                            embedding = await generateEmbedding(sanitizedContent);
+                            // 15 RPM limit = 1 request every 4 seconds.
+                            await sleep(4000);
+                            break;
+                        } catch (err: any) {
+                            const errMsg = err?.message?.toLowerCase() || '';
+                            if (err.status === 429 || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit')) {
+                                const { rotateSummaryKey } = await import('../lib/geminiAuth.js');
+                                if (rotateSummaryKey()) {
+                                    console.warn("Gemini API Quota hit in RAG! Rotated to backup API key...");
+                                    await sleep(1000);
+                                } else {
+                                    console.warn("Gemini API Rate limit hit! Pausing for 35 seconds...");
+                                    await sleep(35000);
+                                }
+                                retries--;
+                            } else {
+                                throw err;
+                            }
+                        }
+                    }
+                    if (!embedding) throw new Error("Failed to generate embedding after retries");
                     
                     // Format the embedding as a string for pgvector: "[1.2, 3.4, ...]"
                     const embeddingString = `[${embedding.join(',')}]`;
