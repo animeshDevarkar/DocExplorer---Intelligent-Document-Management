@@ -32,6 +32,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
         console.warn("Embedding failed, rotating key and retrying...");
         rotateGeminiKey();
         const retryAi = getGeminiClient();
+        if (!retryAi) {
+            throw new Error("Gemini API Client not initialized after rotation.");
+        }
         response = await retryAi.models.embedContent({
             model: 'gemini-embedding-001',
             contents: text

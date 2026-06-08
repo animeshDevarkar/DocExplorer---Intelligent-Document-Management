@@ -27,7 +27,7 @@ chatRouter.post('/', async (c) => {
             return c.json({ error: 'Message and document ID(s) are required' }, 400);
         }
 
-        if (!ai) {
+        if (!getGeminiClient()) {
             return c.json({ error: 'AI is not configured.' }, 500);
         }
 
