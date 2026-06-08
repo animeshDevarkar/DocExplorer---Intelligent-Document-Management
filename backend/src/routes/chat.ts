@@ -4,12 +4,10 @@ import { auth } from '../auth.js';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { generateEmbedding } from '../lib/embeddings.js';
 import { GoogleGenAI } from '@google/genai';
+import { getGeminiClient, rotateGeminiKey } from '../lib/geminiAuth';
 
 const chatRouter = new Hono<{ Variables: { user: any } }>();
 const prisma = new PrismaClient();
-const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: 'v1' }) : null;
-
-// Middleware to ensure user is authenticated
 chatRouter.use('*', async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session || !session.user) {
@@ -74,6 +72,9 @@ ${contextText}`;
         let chatRetries = 3;
         while (chatRetries > 0) {
             try {
+                const ai = getGeminiClient();
+                if (!ai) throw new Error("No Gemini API key configured.");
+                
                 response = await ai.models.generateContent({
                     model: 'gemini-2.0-flash',
                     contents: message,
@@ -90,8 +91,12 @@ ${contextText}`;
                 const isRateLimit = status === 429 || status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('exhausted');
                 
                 if (isRateLimit && chatRetries > 1) {
-                    console.warn("Chat rate limit hit! Pausing for 20 seconds...");
-                    await new Promise(resolve => setTimeout(resolve, 20000));
+                    if (rotateGeminiKey()) {
+                        console.warn("Retrying chat generation with backup API key...");
+                    } else {
+                        console.warn("Chat rate limit hit! Pausing for 20 seconds...");
+                        await new Promise(resolve => setTimeout(resolve, 20000));
+                    }
                     chatRetries--;
                 } else {
                     throw error;

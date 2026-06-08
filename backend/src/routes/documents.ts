@@ -2,7 +2,9 @@ import "dotenv/config";
 import { Hono } from 'hono';
 import { auth } from '../auth.js';
 import { uploadDocument } from '../lib/cloudinary.js';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
+import { generateEmbedding } from '../lib/embeddings.js';
+import { getGeminiClient, rotateGeminiKey } from '../lib/geminiAuth.js';
 import { v2 as cloudinary } from 'cloudinary';
 import crypto from 'crypto';
 
@@ -131,9 +133,8 @@ documentsRouter.post('/upload', async (c) => {
                 // Generate AI Summary using the first 5000 characters
                 let documentSummary = "Summary could not be generated.";
                 try {
-                    const { GoogleGenAI } = await import('@google/genai');
-                    if (process.env.GEMINI_API_KEY) {
-                        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: 'v1' });
+                    const ai = getGeminiClient();
+                    if (ai) {
                         // Combine first few chunks for context
                         const initialText = chunks.map(c => c.content).join('\n').slice(0, 5000);
                         
@@ -159,8 +160,12 @@ documentsRouter.post('/upload', async (c) => {
                                 const isRateLimit = status === 429 || status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('exhausted');
                                 
                                 if (isRateLimit && summaryRetries > 1) {
-                                    console.warn("Summary generation rate limit hit! Pausing for 50 seconds...");
-                                    await new Promise(resolve => setTimeout(resolve, 50000));
+                                    if (rotateGeminiKey()) {
+                                        console.warn("Retrying summary generation with backup API key...");
+                                    } else {
+                                        console.warn("Summary generation rate limit hit! Pausing for 50 seconds...");
+                                        await new Promise(resolve => setTimeout(resolve, 50000));
+                                    }
                                     summaryRetries--;
                                 } else {
                                     console.error("Summary generation failed:", summaryError);
@@ -170,7 +175,7 @@ documentsRouter.post('/upload', async (c) => {
                         }
                     }
                 } catch (summaryError) {
-                    console.error("Summary generation failed:", summaryError);
+                    console.error("Summary error:", summaryError);
                 }
 
                 // Mark document as ready and save summary
