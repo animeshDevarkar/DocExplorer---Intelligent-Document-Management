@@ -140,7 +140,10 @@ documentsRouter.post('/upload', async (c) => {
                         const response = await ai.models.generateContent({
                             model: 'gemini-1.5-flash',
                             contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${initialText}`,
-                            config: { temperature: 0.3 }
+                            config: { 
+                                temperature: 0.3,
+                                maxOutputTokens: 150 // Limiter for fast generation
+                            }
                         });
                         
                         if (response.text) {

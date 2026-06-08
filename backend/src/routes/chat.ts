@@ -75,7 +75,8 @@ ${contextText}`;
             contents: message,
             config: {
                 systemInstruction: systemInstruction,
-                temperature: 0.2 // low temp for factual QA
+                temperature: 0.2,
+                maxOutputTokens: 300 // low temp for factual QA
             }
         });
 
