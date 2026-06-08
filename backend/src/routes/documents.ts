@@ -142,7 +142,7 @@ documentsRouter.post('/upload', async (c) => {
                             contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${initialText}`,
                             config: { 
                                 temperature: 0.3,
-                                maxOutputTokens: 150 // Limiter for fast generation
+                                maxOutputTokens: 300 // Relaxed limiter to prevent cutting off text
                             }
                         });
                         
