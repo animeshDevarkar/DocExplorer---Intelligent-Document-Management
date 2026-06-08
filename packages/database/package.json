@@ -1,9 +1,11 @@
 {
   "name": "@docexplorer/database",
   "version": "1.0.0",
+  "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "scripts": {
+    "postinstall": "prisma generate",
     "generate": "prisma generate",
     "db:push": "prisma db push"
   },
