@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
-import { getGeminiClient, rotateGeminiKey } from './geminiAuth';
+import { getGeminiClient, rotateGeminiKey } from './geminiAuth.js';
 
 // Initialize Gemini API client
 // Use dynamic client

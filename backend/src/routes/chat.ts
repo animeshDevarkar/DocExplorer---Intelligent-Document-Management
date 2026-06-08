@@ -4,7 +4,7 @@ import { auth } from '../auth.js';
 import { PrismaClient, Prisma } from '@prisma/client';
 import { generateEmbedding } from '../lib/embeddings.js';
 import { GoogleGenAI } from '@google/genai';
-import { getGeminiClient, rotateGeminiKey } from '../lib/geminiAuth';
+import { getGeminiClient, rotateGeminiKey } from '../lib/geminiAuth.js';
 
 const chatRouter = new Hono<{ Variables: { user: any } }>();
 const prisma = new PrismaClient();
