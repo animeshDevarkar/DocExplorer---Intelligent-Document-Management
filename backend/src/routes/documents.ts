@@ -305,6 +305,9 @@ documentsRouter.post('/:id/summarize', async (c) => {
                         console.warn("Retrying summary generation with backup API key...");
                         // RE-FETCH the client so it uses the newly rotated key!
                         ai = getSummaryClient();
+                        if (!ai) {
+                            return c.json({ error: 'AI summary client not configured.' }, 500);
+                        }
                     } else {
                         console.warn("Summary generation rate limit hit! Pausing for 50 seconds...");
                         await new Promise(resolve => setTimeout(resolve, 50000));
