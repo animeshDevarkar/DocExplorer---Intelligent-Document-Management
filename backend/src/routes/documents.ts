@@ -138,7 +138,7 @@ documentsRouter.post('/upload', async (c) => {
                         const initialText = chunks.map(c => c.content).join('\n').slice(0, 5000);
                         
                         const response = await ai.models.generateContent({
-                            model: 'gemini-2.5-flash',
+                            model: 'gemini-2.0-flash',
                             contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${initialText}`,
                             config: { temperature: 0.3 }
                         });
