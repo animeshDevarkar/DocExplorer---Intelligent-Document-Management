@@ -85,16 +85,20 @@ documentsRouter.post('/upload', async (c) => {
 
                 // Generate embeddings and save to pgvector sequentially to respect API rate limits
                 for (const chunk of chunks) {
+                    // Sanitize null bytes from PDF extraction which crash PostgreSQL
+                    const sanitizedContent = chunk.content.replace(/\0/g, '');
+                    
                     let embedding;
                     let retries = 3;
                     while (retries > 0) {
                         try {
-                            embedding = await generateEmbedding(chunk.content);
-                            // Add a small delay to prevent hitting 100 RPM limit instantly
-                            await sleep(650);
+                            embedding = await generateEmbedding(sanitizedContent);
+                            // 15 RPM limit = 1 request every 4 seconds.
+                            await sleep(4000);
                             break;
                         } catch (err: any) {
-                            if (err.status === 429) {
+                            const errMsg = err?.message?.toLowerCase() || '';
+                            if (err.status === 429 || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit')) {
                                 console.warn("Gemini API Rate limit hit! Pausing for 35 seconds...");
                                 await sleep(35000);
                                 retries--;
