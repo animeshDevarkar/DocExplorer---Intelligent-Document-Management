@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { Hono } from 'hono';
-import { auth } from '../auth';
-import { uploadDocument } from '../lib/cloudinary';
+import { auth } from '../auth.js';
+import { uploadDocument } from '../lib/cloudinary.js';
 import { PrismaClient } from '@prisma/client';
 import { v2 as cloudinary } from 'cloudinary';
 import crypto from 'crypto';
@@ -74,8 +74,8 @@ documentsRouter.post('/upload', async (c) => {
         // We run this asynchronously so the user gets an instant upload response!
         (async () => {
             try {
-                const { processPDF } = await import('../lib/pdf-processor');
-                const { generateEmbedding } = await import('../lib/embeddings');
+                const { processPDF } = await import('../lib/pdf-processor.js');
+                const { generateEmbedding } = await import('../lib/embeddings.js');
                 const crypto = await import('crypto');
 
                 // Extract and chunk

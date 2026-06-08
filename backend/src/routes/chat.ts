@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { Hono } from 'hono';
-import { auth } from '../auth';
+import { auth } from '../auth.js';
 import { PrismaClient } from '@prisma/client';
-import { generateEmbedding } from '../lib/embeddings';
+import { generateEmbedding } from '../lib/embeddings.js';
 import { GoogleGenAI } from '@google/genai';
 
 const chatRouter = new Hono<{ Variables: { user: any } }>();

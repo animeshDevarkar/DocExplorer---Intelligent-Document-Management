@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { auth } from './auth'
+import { auth } from './auth.js'
 
 import { PrismaClient } from '@prisma/client'
 
@@ -38,15 +38,15 @@ app.all("/api/auth/*", (c) => {
 });
 
 // Mount User routes
-import { userRouter } from './routes/user'
+import { userRouter } from './routes/user.js'
 app.route('/api/users', userRouter)
 
 // Mount Document routes
-import { documentsRouter } from './routes/documents'
+import { documentsRouter } from './routes/documents.js'
 app.route('/api/documents', documentsRouter)
 
 // Mount Chat routes
-import { chatRouter } from './routes/chat'
+import { chatRouter } from './routes/chat.js'
 app.route('/api/chat', chatRouter)
 
 serve({

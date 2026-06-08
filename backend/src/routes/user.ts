@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Hono } from 'hono';
-import { auth } from '../auth';
+import { auth } from '../auth.js';
 import { v2 as cloudinary } from 'cloudinary';
 import { PrismaClient } from '@prisma/client';
 
