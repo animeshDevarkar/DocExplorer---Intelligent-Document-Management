@@ -85,7 +85,11 @@ ${contextText}`;
                 });
                 break;
             } catch (error: any) {
-                if (error.status === 429 && chatRetries > 1) {
+                const status = error.status || (error.error && error.error.code);
+                const errMsg = (error.message || '').toLowerCase();
+                const isRateLimit = status === 429 || status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('exhausted');
+                
+                if (isRateLimit && chatRetries > 1) {
                     console.warn("Chat rate limit hit! Pausing for 20 seconds...");
                     await new Promise(resolve => setTimeout(resolve, 20000));
                     chatRetries--;

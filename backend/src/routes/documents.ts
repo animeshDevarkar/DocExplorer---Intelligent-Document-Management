@@ -154,7 +154,11 @@ documentsRouter.post('/upload', async (c) => {
                                 }
                                 break;
                             } catch (summaryError: any) {
-                                if (summaryError.status === 429 && summaryRetries > 1) {
+                                const status = summaryError.status || (summaryError.error && summaryError.error.code);
+                                const errMsg = (summaryError.message || '').toLowerCase();
+                                const isRateLimit = status === 429 || status === 'RESOURCE_EXHAUSTED' || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('exhausted');
+                                
+                                if (isRateLimit && summaryRetries > 1) {
                                     console.warn("Summary generation rate limit hit! Pausing for 50 seconds...");
                                     await new Promise(resolve => setTimeout(resolve, 50000));
                                     summaryRetries--;
