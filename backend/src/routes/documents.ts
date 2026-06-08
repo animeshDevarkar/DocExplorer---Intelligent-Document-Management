@@ -101,8 +101,14 @@ documentsRouter.post('/upload', async (c) => {
                         } catch (err: any) {
                             const errMsg = err?.message?.toLowerCase() || '';
                             if (err.status === 429 || errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit')) {
-                                console.warn("Gemini API Rate limit hit! Pausing for 35 seconds...");
-                                await sleep(35000);
+                                const { rotateSummaryKey } = await import('../lib/geminiAuth.js');
+                                if (rotateSummaryKey()) {
+                                    console.warn("Gemini API Quota hit in RAG! Rotated to backup API key...");
+                                    await sleep(1000);
+                                } else {
+                                    console.warn("Gemini API Rate limit hit! Pausing for 35 seconds...");
+                                    await sleep(35000);
+                                }
                                 retries--;
                             } else {
                                 throw err;
@@ -202,8 +208,6 @@ documentsRouter.get('/:id', async (c) => {
     });
 });
 
-// We removed the proxy route completely. Frontend will use Cloudinary URL directly.
-
 // Delete a document
 documentsRouter.delete('/:id', async (c) => {
     const user = c.get('user');
@@ -260,7 +264,9 @@ documentsRouter.post('/:id/summarize', async (c) => {
             return c.json({ summary: document.summary });
         }
 
-        const ai = getSummaryClient();
+        let documentSummary = "Summary could not be generated.";
+        let summaryRetries = 3;
+        let ai = getSummaryClient();
         if (!ai) {
             return c.json({ error: 'AI summary client not configured.' }, 500);
         }
@@ -274,8 +280,6 @@ documentsRouter.post('/:id/summarize', async (c) => {
             .slice(0, 500)
             .join(' ');
 
-        let documentSummary = "Summary could not be generated.";
-        let summaryRetries = 3;
         while (summaryRetries > 0) {
             try {
                 const response = await ai.models.generateContent({
@@ -299,6 +303,8 @@ documentsRouter.post('/:id/summarize', async (c) => {
                 if (isRateLimit && summaryRetries > 1) {
                     if (rotateSummaryKey()) {
                         console.warn("Retrying summary generation with backup API key...");
+                        // RE-FETCH the client so it uses the newly rotated key!
+                        ai = getSummaryClient();
                     } else {
                         console.warn("Summary generation rate limit hit! Pausing for 50 seconds...");
                         await new Promise(resolve => setTimeout(resolve, 50000));
