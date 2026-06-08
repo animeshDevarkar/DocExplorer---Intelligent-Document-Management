@@ -71,7 +71,7 @@ ${contextText}`;
 
         // 5. Query Gemini LLM to generate the answer
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: 'gemini-1.5-flash',
             contents: message,
             config: {
                 systemInstruction: systemInstruction,
