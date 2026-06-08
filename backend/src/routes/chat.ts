@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { Hono } from 'hono';
 import { auth } from '../auth.js';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { generateEmbedding } from '../lib/embeddings.js';
 import { GoogleGenAI } from '@google/genai';
 
@@ -50,7 +50,7 @@ chatRouter.post('/', async (c) => {
         const similarChunks = await prisma.$queryRaw<Array<{ content: string }>>`
             SELECT content
             FROM "document_chunks"
-            WHERE "document_id" = ANY(${targetIds})
+            WHERE "document_id" IN (${Prisma.join(targetIds)})
             ORDER BY embedding <-> ${queryEmbedding}::vector
             LIMIT ${targetIds.length > 1 ? 6 : 4};
         `;

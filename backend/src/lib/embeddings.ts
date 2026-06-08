@@ -23,7 +23,7 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
     }
 
     const response = await ai.models.embedContent({
-        model: 'gemini-embedding-2',
+        model: 'text-embedding-004',
         contents: text,
         config: { outputDimensionality: 1536 }
     });
