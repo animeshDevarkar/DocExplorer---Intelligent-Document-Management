@@ -1,7 +1,7 @@
 import { pipeline } from '@xenova/transformers';
 
 class EmbeddingPipeline {
-    static task = 'feature-extraction';
+    static task = 'feature-extraction' as const;
     static model = 'Xenova/all-MiniLM-L6-v2';
     static instance: any = null;
 
