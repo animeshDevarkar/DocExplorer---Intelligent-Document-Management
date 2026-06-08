@@ -46,12 +46,15 @@ chatRouter.post('/', async (c) => {
         // 2. Generate vector embedding for the user's query
         const queryEmbedding = await generateEmbedding(message);
 
+        // Format the embedding as a string for pgvector: "[1.2, 3.4, ...]"
+        const embeddingString = `[${queryEmbedding.join(',')}]`;
+
         // 3. Perform Vector Similarity Search across all selected documents
         const similarChunks = await prisma.$queryRaw<Array<{ content: string }>>`
             SELECT content
             FROM "document_chunks"
             WHERE "document_id" IN (${Prisma.join(targetIds)})
-            ORDER BY embedding <-> ${queryEmbedding}::vector
+            ORDER BY embedding <-> ${embeddingString}::vector
             LIMIT ${targetIds.length > 1 ? 6 : 4};
         `;
 

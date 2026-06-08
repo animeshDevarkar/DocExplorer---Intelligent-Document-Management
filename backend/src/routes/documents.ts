@@ -105,6 +105,9 @@ documentsRouter.post('/upload', async (c) => {
                     }
                     if (!embedding) throw new Error("Failed to generate embedding after retries");
                     
+                    // Format the embedding as a string for pgvector: "[1.2, 3.4, ...]"
+                    const embeddingString = `[${embedding.join(',')}]`;
+                    
                     // Prisma requires $executeRaw for pgvector insertions
                     await prisma.$executeRaw`
                       INSERT INTO "document_chunks" (id, "document_id", "user_id", "chunk_index", content, "content_length", "page_number", embedding)
@@ -116,7 +119,7 @@ documentsRouter.post('/upload', async (c) => {
                         ${chunk.content}, 
                         ${chunk.content.length},
                         ${chunk.pageNumber}, 
-                        ${embedding}::vector
+                        ${embeddingString}::vector
                       )
                     `;
                 }
