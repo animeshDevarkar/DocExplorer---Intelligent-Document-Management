@@ -137,17 +137,32 @@ documentsRouter.post('/upload', async (c) => {
                         // Combine first few chunks for context
                         const initialText = chunks.map(c => c.content).join('\n').slice(0, 5000);
                         
-                        const response = await ai.models.generateContent({
-                            model: 'gemini-2.0-flash',
-                            contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${initialText}`,
-                            config: { 
-                                temperature: 0.3,
-                                maxOutputTokens: 300 // Relaxed limiter to prevent cutting off text
+                        let summaryRetries = 3;
+                        while (summaryRetries > 0) {
+                            try {
+                                const response = await ai.models.generateContent({
+                                    model: 'gemini-2.0-flash',
+                                    contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${initialText}`,
+                                    config: { 
+                                        temperature: 0.3,
+                                        maxOutputTokens: 300 
+                                    }
+                                });
+                                
+                                if (response.text) {
+                                    documentSummary = response.text;
+                                }
+                                break;
+                            } catch (summaryError: any) {
+                                if (summaryError.status === 429 && summaryRetries > 1) {
+                                    console.warn("Summary generation rate limit hit! Pausing for 50 seconds...");
+                                    await new Promise(resolve => setTimeout(resolve, 50000));
+                                    summaryRetries--;
+                                } else {
+                                    console.error("Summary generation failed:", summaryError);
+                                    break;
+                                }
                             }
-                        });
-                        
-                        if (response.text) {
-                            documentSummary = response.text;
                         }
                     }
                 } catch (summaryError) {

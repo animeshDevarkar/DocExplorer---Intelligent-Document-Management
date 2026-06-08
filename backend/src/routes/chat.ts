@@ -70,15 +70,34 @@ DOCUMENT CONTEXT:
 ${contextText}`;
 
         // 5. Query Gemini LLM to generate the answer
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: message,
-            config: {
-                systemInstruction: systemInstruction,
-                temperature: 0.2,
-                maxOutputTokens: 300 // low temp for factual QA
+        let response;
+        let chatRetries = 3;
+        while (chatRetries > 0) {
+            try {
+                response = await ai.models.generateContent({
+                    model: 'gemini-2.0-flash',
+                    contents: message,
+                    config: {
+                        systemInstruction: systemInstruction,
+                        temperature: 0.2,
+                        maxOutputTokens: 300
+                    }
+                });
+                break;
+            } catch (error: any) {
+                if (error.status === 429 && chatRetries > 1) {
+                    console.warn("Chat rate limit hit! Pausing for 20 seconds...");
+                    await new Promise(resolve => setTimeout(resolve, 20000));
+                    chatRetries--;
+                } else {
+                    throw error;
+                }
             }
-        });
+        }
+        
+        if (!response) {
+            throw new Error("Failed to generate response after retries.");
+        }
 
         // Save message to chat history
         let session;
