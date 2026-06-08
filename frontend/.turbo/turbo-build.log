@@ -1,0 +1,57 @@
+
+> frontend@0.1.0 build
+> next build
+
+⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of D:\DocExplorer\package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * D:\DocExplorer\frontend\package-lock.json
+
+▲ Next.js 16.2.7 (Turbopack)
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+[externals]/@prisma/client
+unexpected export *
+export * used with module [externals]/@prisma/client [external] (@prisma/client, cjs, [project]/node_modules/@prisma/client) which is a CommonJS module with exports only available at runtime
+List all export names manually (`export { a, b, c } from "...") or rewrite the module to ESM, to avoid the additional runtime code.`
+
+Import trace:
+  external:
+    [externals]/@prisma/client [external]
+    ./packages/auth/src/index.ts [App Route]
+    ./frontend/src/app/api/auth/[...all]/route.ts [App Route]
+
+
+
+> Build error occurred
+Error: Turbopack build failed with 1 errors:
+./packages/auth/src/index.ts:1:1
+Module not found: Can't resolve 'dotenv/config'
+[31m[1m>[0m [90m1 |[0m [36mimport[0m [32m"dotenv/config"[0m;
+  [90m  |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m2 |[0m [36mimport[0m { betterAuth } [36mfrom[0m [32m"better-auth"[0m;
+  [90m3 |[0m [36mimport[0m { prismaAdapter } [36mfrom[0m [32m"better-auth/adapters/prisma"[0m;
+  [90m4 |[0m [36mimport[0m { [33mPrismaClient[0m } [36mfrom[0m [32m"@docexplorer/database"[0m;
+
+
+
+Import trace:
+  App Route:
+    ./packages/auth/src/index.ts
+    ./frontend/src/app/api/auth/[...all]/route.ts
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+    at <unknown> (./packages/auth/src/index.ts:1:1)
+    at <unknown> (https://nextjs.org/docs/messages/module-not-found)
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path D:\DocExplorer\frontend
+npm error workspace frontend@0.1.0
+npm error location D:\DocExplorer\frontend
+npm error command failed
+npm error command C:\Windows\system32\cmd.exe /d /s /c next build

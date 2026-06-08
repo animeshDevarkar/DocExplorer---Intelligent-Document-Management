@@ -7,6 +7,8 @@
     "start": "node dist/index.js"
   },
   "dependencies": {
+    "@docexplorer/auth": "*",
+    "@docexplorer/database": "*",
     "@google/genai": "^2.7.0",
     "@hono/node-server": "^1.19.14",
     "@langchain/core": "^1.1.48",
@@ -22,6 +24,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.17",
+    "@types/pdf-parse": "^1.1.4",
     "prisma": "^6.4.1",
     "tsx": "^4.7.1",
     "typescript": "^5.8.3"
