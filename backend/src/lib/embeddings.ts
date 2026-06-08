@@ -7,7 +7,7 @@ let ai: GoogleGenAI | null = null;
 
 try {
     if (process.env.GEMINI_API_KEY) {
-        ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '', apiVersion: 'v1' });
     }
 } catch (e) {
     console.warn("Gemini API Key not found. Vector embeddings will fail until configured.");

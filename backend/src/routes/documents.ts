@@ -133,12 +133,12 @@ documentsRouter.post('/upload', async (c) => {
                 try {
                     const { GoogleGenAI } = await import('@google/genai');
                     if (process.env.GEMINI_API_KEY) {
-                        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+                        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: 'v1' });
                         // Combine first few chunks for context
                         const initialText = chunks.map(c => c.content).join('\n').slice(0, 5000);
                         
                         const response = await ai.models.generateContent({
-                            model: 'gemini-1.5-flash-latest',
+                            model: 'gemini-1.5-flash',
                             contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${initialText}`,
                             config: { 
                                 temperature: 0.3,

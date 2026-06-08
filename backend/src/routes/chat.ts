@@ -7,7 +7,7 @@ import { GoogleGenAI } from '@google/genai';
 
 const chatRouter = new Hono<{ Variables: { user: any } }>();
 const prisma = new PrismaClient();
-const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY }) : null;
+const ai = process.env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: 'v1' }) : null;
 
 // Middleware to ensure user is authenticated
 chatRouter.use('*', async (c, next) => {
@@ -71,7 +71,7 @@ ${contextText}`;
 
         // 5. Query Gemini LLM to generate the answer
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash-latest',
+            model: 'gemini-1.5-flash',
             contents: message,
             config: {
                 systemInstruction: systemInstruction,
