@@ -23,7 +23,7 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
     }
 
     const response = await ai.models.embedContent({
-        model: 'text-embedding-004',
+        model: 'gemini-embedding-001',
         contents: text
     });
 
@@ -34,7 +34,7 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
     const values = response.embeddings[0].values;
     
     // The database column is strictly vector(1536).
-    // text-embedding-004 produces 768-d vectors. We must pad them with zeros 
+    // gemini-embedding-001 produces 768-d vectors. We must pad them with zeros 
     // so they fit in the database. (Padding with zeros does not break cosine similarity).
     if (values.length < 1536) {
         return [...values, ...new Array(1536 - values.length).fill(0)];
