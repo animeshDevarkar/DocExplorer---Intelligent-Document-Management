@@ -24,13 +24,21 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
 
     const response = await ai.models.embedContent({
         model: 'text-embedding-004',
-        contents: text,
-        config: { outputDimensionality: 1536 }
+        contents: text
     });
 
     if (!response.embeddings || response.embeddings.length === 0 || !response.embeddings[0].values) {
         throw new Error("Failed to generate embedding from Gemini API.");
     }
 
-    return response.embeddings[0].values;
+    const values = response.embeddings[0].values;
+    
+    // The database column is strictly vector(1536).
+    // text-embedding-004 produces 768-d vectors. We must pad them with zeros 
+    // so they fit in the database. (Padding with zeros does not break cosine similarity).
+    if (values.length < 1536) {
+        return [...values, ...new Array(1536 - values.length).fill(0)];
+    }
+
+    return values;
 };
