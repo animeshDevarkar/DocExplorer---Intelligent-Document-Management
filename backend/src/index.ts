@@ -4,7 +4,10 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { auth } from './auth'
 
+import { PrismaClient } from '@prisma/client'
+
 const app = new Hono()
+const prisma = new PrismaClient()
 
 app.use('*', cors({
   origin: (origin) => origin || 'http://localhost:3000',
@@ -17,6 +20,16 @@ app.use('*', cors({
 
 app.get('/', (c) => {
   return c.text('DocExplorer API is running!')
+})
+
+// Public health check to keep DB awake from cron jobs
+app.get('/api/ping', async (c) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return c.text('Pong!');
+  } catch (err) {
+    return c.text('DB Error', 500);
+  }
 })
 
 // Mount better-auth handler
