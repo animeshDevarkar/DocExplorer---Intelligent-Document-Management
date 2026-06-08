@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, use } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Send, FileText, ArrowLeft, Loader2, Bot, User } from "lucide-react";
 import Link from "next/link";
@@ -20,6 +20,8 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
   const [language, setLanguage] = useState("English");
   const [isLoading, setIsLoading] = useState(false);
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [hasSummary, setHasSummary] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
@@ -33,6 +35,9 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
       .then(data => {
         if (data.document?.cloudinaryUrl) {
           setDocumentUrl(data.document.cloudinaryUrl);
+        }
+        if (data.document?.summary) {
+          setHasSummary(true);
         }
       })
       .catch(err => console.error("Failed to fetch document:", err));
@@ -110,6 +115,30 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
     }
   };
 
+  const handleGenerateSummary = async () => {
+    setIsSummarizing(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/documents/${documentId}/summarize`, {
+        method: 'POST',
+        credentials: "include"
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHasSummary(true);
+        // Add the summary to the chat!
+        setMessages(prev => [...prev, { 
+          id: Date.now().toString(), 
+          role: "assistant", 
+          content: `**Document Summary:**\n\n${data.summary}` 
+        }]);
+      }
+    } catch (err) {
+      console.error("Failed to generate summary", err);
+    } finally {
+      setIsSummarizing(false);
+    }
+  };
+
   return (
     <div className="flex h-screen flex-col bg-background">
       
@@ -172,7 +201,8 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
             ) : (
               <>
                 {messages.map((msg) => (
-                  <div key={msg.id} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <React.Fragment key={msg.id}>
+                  <div className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     {msg.role === 'assistant' && (
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
                         <Bot className="w-4 h-4 text-primary" />
@@ -193,6 +223,25 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
                       </div>
                     )}
                   </div>
+                  
+                  {msg.id === 'intro' && !hasSummary && (
+                    <div className="flex justify-start pt-2 pb-4">
+                      <div className="ml-11">
+                        <button 
+                          onClick={handleGenerateSummary}
+                          disabled={isSummarizing}
+                          className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium rounded-lg transition-colors border border-primary/20 shadow-sm disabled:opacity-50"
+                        >
+                          {isSummarizing ? (
+                            <><Loader2 className="w-4 h-4 animate-spin" /> Generating Summary...</>
+                          ) : (
+                            <><FileText className="w-4 h-4" /> Generate AI Summary</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  </React.Fragment>
                 ))}
                 
                 {isLoading && (
