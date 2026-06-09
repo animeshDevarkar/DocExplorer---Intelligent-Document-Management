@@ -14,7 +14,7 @@ export let summaryKeyIndex = 0;
 export const getSummaryClient = () => {
     const keys = getSummaryKeys();
     if (keys.length === 0) return null;
-    return new GoogleGenAI({ apiKey: keys[summaryKeyIndex], apiVersion: 'v1' });
+    return new GoogleGenAI({ apiKey: keys[summaryKeyIndex] });
 };
 
 export const rotateSummaryKey = () => {
@@ -44,7 +44,7 @@ export const getChatClient = () => {
         // Fallback to summary keys if no chat keys are explicitly set
         return getSummaryClient();
     }
-    return new GoogleGenAI({ apiKey: keys[chatKeyIndex], apiVersion: 'v1' });
+    return new GoogleGenAI({ apiKey: keys[chatKeyIndex] });
 };
 
 export const rotateChatKey = () => {
