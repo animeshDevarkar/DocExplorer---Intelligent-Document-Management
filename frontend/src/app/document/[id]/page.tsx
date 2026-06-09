@@ -74,12 +74,8 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const userMsg = input.trim();
-    setInput("");
+  const sendMessage = async (userMsg: string) => {
+    if (!userMsg.trim() || isLoading) return;
     
     // Add optimistic user message
     const tempId = Date.now().toString();
@@ -113,6 +109,13 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const msg = input;
+    setInput("");
+    await sendMessage(msg);
   };
 
   const handleGenerateSummary = async () => {
@@ -224,23 +227,6 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
                     )}
                   </div>
                   
-                  {msg.id === 'intro' && !hasSummary && (
-                    <div className="flex justify-start pt-2 pb-4">
-                      <div className="ml-11">
-                        <button 
-                          onClick={handleGenerateSummary}
-                          disabled={isSummarizing}
-                          className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm font-medium rounded-lg transition-colors border border-primary/20 shadow-sm disabled:opacity-50"
-                        >
-                          {isSummarizing ? (
-                            <><Loader2 className="w-4 h-4 animate-spin" /> Generating Summary...</>
-                          ) : (
-                            <><FileText className="w-4 h-4" /> Generate AI Summary</>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  )}
                   </React.Fragment>
                 ))}
                 
@@ -277,6 +263,16 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
                 className="w-full max-h-32 min-h-[40px] bg-transparent resize-none border-none outline-none py-2 pl-2 text-sm"
                 rows={1}
               />
+              <button
+                type="button"
+                onClick={() => sendMessage("Generate the summary for the following pdf")}
+                disabled={isLoading}
+                className="h-10 px-3 shrink-0 bg-secondary text-secondary-foreground border border-border rounded-lg flex items-center justify-center hover:bg-secondary/80 disabled:opacity-50 transition-colors text-xs font-medium whitespace-nowrap"
+                title="Quick Summary"
+              >
+                <FileText className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Summary</span>
+              </button>
               <button 
                 type="submit" 
                 disabled={!input.trim() || isLoading}
