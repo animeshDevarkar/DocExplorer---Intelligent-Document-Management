@@ -25,6 +25,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
         response = await currentAi.models.embedContent({
             model: 'gemini-embedding-2',
             contents: text,
+            // @ts-ignore
             config: { outputDimensionality: 768 }
         });
     } catch (e) {
@@ -37,6 +38,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
         response = await retryAi.models.embedContent({
             model: 'gemini-embedding-2',
             contents: text,
+            // @ts-ignore
             config: { outputDimensionality: 768 }
         });
     }
