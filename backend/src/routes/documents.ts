@@ -283,7 +283,7 @@ documentsRouter.post('/:id/summarize', async (c) => {
         while (summaryRetries > 0) {
             try {
                 const response = await ai.models.generateContent({
-                    model: 'gemini-2.0-flash',
+                    model: 'gemini-1.5-flash',
                     contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${truncatedText}`,
                     config: { 
                         temperature: 0.3,
