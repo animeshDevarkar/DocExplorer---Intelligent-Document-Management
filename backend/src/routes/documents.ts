@@ -287,7 +287,7 @@ documentsRouter.post('/:id/summarize', async (c) => {
                     contents: `Please provide a very brief 2-sentence TL;DR summary and 3 key bullet points for this document based on the following extracted text:\n\n${truncatedText}`,
                     config: { 
                         temperature: 0.3,
-                        maxOutputTokens: 300 
+                        maxOutputTokens: 2000 
                     }
                 });
                 
