@@ -95,8 +95,8 @@ documentsRouter.post('/upload', async (c) => {
                     while (retries > 0) {
                         try {
                             embedding = await generateEmbedding(sanitizedContent);
-                            // 15 RPM limit = 1 request every 4 seconds.
-                            await sleep(4000);
+                            // Process as fast as possible, relying on key rotation for rate limits
+                            await sleep(200);
                             break;
                         } catch (err: any) {
                             const errMsg = err?.message?.toLowerCase() || '';
