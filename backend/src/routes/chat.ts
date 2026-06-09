@@ -54,13 +54,21 @@ chatRouter.post('/', async (c) => {
             FROM "document_chunks"
             WHERE "document_id" IN (${Prisma.join(targetIds)})
             ORDER BY embedding <-> ${embeddingString}::vector
-            LIMIT ${targetIds.length > 1 ? 6 : 4};
+            LIMIT ${targetIds.length > 1 ? 12 : 5};
         `;
 
         // 4. Construct the prompt context
         const contextText = similarChunks.map(chunk => chunk.content).join('\n\n---\n\n');
         
-        const systemInstruction = `You are DocExplorer AI, an intelligent assistant helping a user understand their documents.
+        const systemInstruction = targetIds.length > 1 
+            ? `You are DocExplorer AI, an intelligent assistant helping a user compare multiple documents.
+Always base your answers strictly on the provided DOCUMENT CONTEXT. The user has selected multiple documents to compare. You MUST synthesize and compare the information provided in the context to find similarities and differences. If the answer cannot be found, politely state that. Keep your answers well-structured and use formatting.
+
+CRITICAL REQUIREMENT: You MUST reply entirely in the following language: ${language || 'English'}.
+
+DOCUMENT CONTEXT:
+${contextText}`
+            : `You are DocExplorer AI, an intelligent assistant helping a user understand their documents.
 Always base your answers strictly on the provided DOCUMENT CONTEXT. If the answer cannot be found in the context, politely state that you do not have enough information from the document to answer.
 Keep your answers concise, direct, and well-structured. Avoid writing unnecessarily long essays unless requested.
 
