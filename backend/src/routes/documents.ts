@@ -259,7 +259,7 @@ documentsRouter.post('/:id/summarize', async (c) => {
             return c.json({ error: 'Document not found' }, 404);
         }
 
-        if (document.summary) {
+        if (document.summary && document.summary !== "Summary could not be generated.") {
             // Cache hit
             return c.json({ summary: document.summary });
         }
