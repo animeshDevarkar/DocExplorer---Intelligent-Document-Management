@@ -62,6 +62,7 @@ chatRouter.post('/', async (c) => {
         
         const systemInstruction = `You are DocExplorer AI, an intelligent assistant helping a user understand their documents.
 Always base your answers strictly on the provided DOCUMENT CONTEXT. If the answer cannot be found in the context, politely state that you do not have enough information from the document to answer.
+Keep your answers concise, direct, and well-structured. Avoid writing unnecessarily long essays unless requested.
 
 CRITICAL REQUIREMENT: You MUST reply entirely in the following language: ${language || 'English'}. No matter what language the document is in or what language the prompt is in, your response MUST be in ${language || 'English'}.
 
@@ -77,7 +78,7 @@ ${contextText}`;
                 if (!ai) throw new Error("No Gemini API key configured.");
                 
                 response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash',
+                    model: 'gemini-2.5-flash-lite',
                     contents: message,
                     config: {
                         systemInstruction: systemInstruction,
