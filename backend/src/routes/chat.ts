@@ -8,6 +8,7 @@ import { getChatClient, rotateChatKey } from '../lib/geminiAuth.js';
 
 const chatRouter = new Hono<{ Variables: { user: any } }>();
 const prisma = new PrismaClient();
+// Middleware to ensure user is authenticated
 chatRouter.use('*', async (c, next) => {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     if (!session || !session.user) {

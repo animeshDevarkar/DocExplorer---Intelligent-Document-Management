@@ -23,8 +23,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
     let response;
     try {
         response = await currentAi.models.embedContent({
-            model: 'text-embedding-004',
-            contents: text
+            model: 'gemini-embedding-2',
+            contents: text,
+            config: { outputDimensionality: 768 }
         });
     } catch (e) {
         console.warn("Embedding failed, rotating key and retrying...");
@@ -34,8 +35,9 @@ export async function generateEmbedding(text: string): Promise<number[]> {
             throw new Error("Gemini API Client not initialized after rotation.");
         }
         response = await retryAi.models.embedContent({
-            model: 'text-embedding-004',
-            contents: text
+            model: 'gemini-embedding-2',
+            contents: text,
+            config: { outputDimensionality: 768 }
         });
     }
 
