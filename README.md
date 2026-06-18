@@ -5,11 +5,14 @@ DocExplorer is an intelligent, full-stack document management platform that leve
 ## 🚀 Key Features
 
 - **Lightning-Fast Authentication:** Secure, native Next.js authentication powered by Better Auth.
-- **Smart PDF Uploads:** Securely upload and store your PDF documents in the cloud.
+- **Smart PDF Uploads:** Securely upload and store your PDF documents in the cloud using Cloudinary.
 - **Auto-Summarization:** Instantly generates a TL;DR summary and key bullet points for every uploaded document using Gemini 2.5 Flash.
 - **Interactive AI Chat (RAG):** Ask questions about a specific document or compare multiple documents simultaneously. The AI reads the documents and provides highly accurate answers based *strictly* on the document context.
+- **Multi-lingual Support:** Seamlessly chat and request summaries in English, Spanish, French, German, Chinese, or Hindi.
+- **Chat History:** Chat sessions are saved to the database, allowing you to pick up previous conversations where you left off.
 - **Real-Time Dashboard Search:** Instantly filter through your documents by title or by AI-generated summaries.
 - **High-Performance Architecture:** Built as a Turborepo Monorepo, separating the lightning-fast Next.js frontend from the heavy-lifting Node.js AI worker.
+- **Robust Rate-Limiting Fallbacks:** Automatic API key rotation and exponential backoffs ensure the RAG pipeline continues processing even during Gemini API quotas.
 
 ---
 

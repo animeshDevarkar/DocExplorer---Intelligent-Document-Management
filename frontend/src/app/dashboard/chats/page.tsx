@@ -26,7 +26,7 @@ export default function ChatHistoryPage() {
 
   useEffect(() => {
     if (session) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL || ``}/api/chat`, {
+      fetch(`/api/chat`, {
         credentials: "include"
       })
         .then(res => res.json())

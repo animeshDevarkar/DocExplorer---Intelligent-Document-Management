@@ -121,7 +121,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
   const handleGenerateSummary = async () => {
     setIsSummarizing(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/api/documents/${documentId}/summarize`, {
+      const res = await fetch(`/api/documents/${documentId}/summarize`, {
         method: 'POST',
         credentials: "include"
       });

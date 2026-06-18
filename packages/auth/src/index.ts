@@ -5,8 +5,14 @@ import { PrismaClient } from "@docexplorer/database";
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
-  baseURL: process.env.NEXT_PUBLIC_FRONTEND_URL || process.env.BETTER_AUTH_URL || "http://localhost:3000",
-  trustedOrigins: process.env.NEXT_PUBLIC_FRONTEND_URL ? [process.env.NEXT_PUBLIC_FRONTEND_URL, "http://localhost:3000"] : ["http://localhost:3000"],
+  baseURL: process.env.NEXT_PUBLIC_FRONTEND_URL || process.env.BETTER_AUTH_URL || (process.env.NODE_ENV === 'production' ? "https://docexplorer.site" : "http://localhost:3000"),
+  trustedOrigins: [
+    process.env.NEXT_PUBLIC_FRONTEND_URL, 
+    process.env.BETTER_AUTH_URL, 
+    process.env.RENDER_EXTERNAL_URL, 
+    "http://localhost:3000", 
+    "https://docexplorer.site"
+  ].filter(Boolean) as string[],
   advanced: {
     crossSubDomainCookies: {
       enabled: true
