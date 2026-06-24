@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   transpilePackages: ["@docexplorer/auth", "@docexplorer/database"],
   async rewrites() {
-    const backendUrl = process.env.RENDER_URL || "http://localhost:3001";
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || process.env.RENDER_URL || "http://localhost:3001";
     return [
       {
         source: '/api/documents',
