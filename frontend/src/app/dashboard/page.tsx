@@ -11,8 +11,14 @@ import { authClient } from "@/lib/auth-client";
 export default function DashboardPage() {
   const router = useRouter();
   const [isUploadOpen, setIsUploadOpen] = useState(false);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const cached = sessionStorage.getItem("cached_documents");
+      if (cached) return JSON.parse(cached);
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => documents.length === 0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
@@ -36,6 +42,7 @@ export default function DashboardPage() {
       if (res.ok) {
         const data = await res.json();
         setDocuments(data.documents);
+        sessionStorage.setItem("cached_documents", JSON.stringify(data.documents));
         setErrorMsg(null);
       } else if (res.status === 401) {
          router.push("/login");
