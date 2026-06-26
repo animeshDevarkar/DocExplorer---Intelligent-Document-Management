@@ -6,6 +6,7 @@ import { jwt } from "better-auth/plugins";
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
+  secret: "DocExplorer_Shared_Secret_Very_Secure_String_991823",
   baseURL: process.env.NEXT_PUBLIC_FRONTEND_URL || 
            process.env.BETTER_AUTH_URL || 
            (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined) ||

@@ -11,9 +11,11 @@ import crypto from 'crypto';
 const documentsRouter = new Hono<{ Variables: { user: any } }>();
 const prisma = new PrismaClient();
 
-// Middleware to ensure user is authenticated
 documentsRouter.use('*', async (c, next) => {
+    console.log("=== INCOMING REQUEST TO RENDER ===");
+    console.log("Headers:", Object.fromEntries(c.req.raw.headers.entries()));
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    console.log("Better Auth Session result:", session);
     if (!session || !session.user) {
         return c.json({ error: 'Unauthorized' }, 401);
     }
