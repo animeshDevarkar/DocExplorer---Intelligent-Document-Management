@@ -12,10 +12,13 @@ const documentsRouter = new Hono<{ Variables: { user: any } }>();
 const prisma = new PrismaClient();
 
 documentsRouter.use('*', async (c, next) => {
-    console.log("=== INCOMING REQUEST TO RENDER ===");
-    console.log("Headers:", Object.fromEntries(c.req.raw.headers.entries()));
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
-    console.log("Better Auth Session result:", session);
+    // Better Auth rejects requests if the Host header doesn't match the baseURL.
+    // Since Next.js proxy rewrites the Host to onrender.com, we must spoof it back to vercel.app.
+    const spoofedHeaders = new Headers(c.req.raw.headers);
+    spoofedHeaders.set("host", "docexplorer.vercel.app");
+    spoofedHeaders.set("origin", "https://docexplorer.vercel.app");
+    
+    const session = await auth.api.getSession({ headers: spoofedHeaders });
     if (!session || !session.user) {
         return c.json({ error: 'Unauthorized' }, 401);
     }
