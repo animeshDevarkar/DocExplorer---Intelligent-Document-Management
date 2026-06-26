@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { PrismaClient } from "@docexplorer/database";
+import { jwt } from "better-auth/plugins";
 
 const prisma = new PrismaClient();
 
@@ -23,9 +24,13 @@ export const auth = betterAuth({
       maxAge: 604800
     }
   },
-  session: {
-    strategy: "jwt",
-  },
+  plugins: [
+    jwt({
+        jwt: {
+            expirationTime: "7d",
+        }
+    })
+  ],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
