@@ -22,6 +22,11 @@ app.get('/', (c) => {
   return c.text('DocExplorer API is running!')
 })
 
+app.onError((err, c) => {
+  console.error("Global Error:", err);
+  return c.json({ error: err.message || "Internal Server Error", stack: err.stack }, 500);
+})
+
 // Public health check to keep DB awake from cron jobs
 app.get('/api/ping', async (c) => {
   try {

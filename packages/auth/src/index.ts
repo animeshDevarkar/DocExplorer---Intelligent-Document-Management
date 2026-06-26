@@ -30,13 +30,6 @@ export const auth = betterAuth({
       maxAge: 604800
     }
   },
-  plugins: [
-    jwt({
-        jwt: {
-            expirationTime: "7d",
-        }
-    })
-  ],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
