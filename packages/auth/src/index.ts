@@ -21,6 +21,7 @@ export const auth = betterAuth({
     "https://docexplorer.vercel.app"
   ].filter(Boolean) as string[],
   advanced: {
+    cookiePrefix: "docex",
     crossSubDomainCookies: {
       enabled: false
     },
