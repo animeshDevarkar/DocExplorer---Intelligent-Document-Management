@@ -325,3 +325,12 @@ model ApiKey {
   @@index([keyHash])
   @@map("api_keys")
 }
+
+model Jwks {
+  id         String   @id
+  publicKey  String   @map("public_key")
+  privateKey String   @map("private_key")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("jwks")
+}
