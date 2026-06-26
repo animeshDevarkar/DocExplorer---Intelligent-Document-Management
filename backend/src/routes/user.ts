@@ -9,7 +9,11 @@ const prisma = new PrismaClient();
 
 // Middleware to ensure user is authenticated
 userRouter.use('*', async (c, next) => {
-    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    const spoofedHeaders = new Headers(c.req.raw.headers);
+    spoofedHeaders.set("host", "docexplorer.vercel.app");
+    spoofedHeaders.set("origin", "https://docexplorer.vercel.app");
+    
+    const session = await auth.api.getSession({ headers: spoofedHeaders });
     if (!session || !session.user) {
         return c.json({ error: 'Unauthorized' }, 401);
     }
