@@ -21,10 +21,10 @@ export const auth = betterAuth({
   ].filter(Boolean) as string[],
   advanced: {
     crossSubDomainCookies: {
-      enabled: true
+      enabled: false
     },
     defaultCookieAttributes: {
-      sameSite: "none",
+      sameSite: "lax", // Better for same-domain proxy setups
       secure: true,
       maxAge: 604800
     }
