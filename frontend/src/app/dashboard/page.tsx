@@ -164,9 +164,11 @@ export default function DashboardPage() {
 
           {/* Document Grid */}
           {loading ? (
-             <div className="flex items-center justify-center h-48">
-                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 relative">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-64 rounded-2xl bg-muted/30 animate-pulse border border-border/30" />
+              ))}
+            </div>
           ) : errorMsg ? (
              <div className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-red-500/50 bg-red-500/10 rounded-xl p-6 text-center">
                  <p className="text-red-500 font-bold mb-2">Connection Error</p>

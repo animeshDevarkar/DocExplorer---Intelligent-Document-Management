@@ -23,6 +23,9 @@ export const auth = betterAuth({
       maxAge: 604800
     }
   },
+  session: {
+    strategy: "jwt",
+  },
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),

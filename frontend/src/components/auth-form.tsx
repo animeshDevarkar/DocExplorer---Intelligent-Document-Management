@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn, signUp } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
@@ -12,6 +12,11 @@ export function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Prefetch dashboard in the background so it loads instantly after login
+    router.prefetch("/dashboard");
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +30,10 @@ export function AuthForm() {
             password,
         });
         if (signInError) throw new Error(signInError.message || "Invalid credentials.");
+        
+        // Fire-and-forget backend warmup
+        fetch('/api/ping').catch(() => {});
+        
         router.refresh();
         router.push("/dashboard");
       } else {
@@ -34,6 +43,10 @@ export function AuthForm() {
             name,
         });
         if (signUpError) throw new Error(signUpError.message || "Failed to create account.");
+        
+        // Fire-and-forget backend warmup
+        fetch('/api/ping').catch(() => {});
+        
         router.refresh();
         router.push("/dashboard");
       }
