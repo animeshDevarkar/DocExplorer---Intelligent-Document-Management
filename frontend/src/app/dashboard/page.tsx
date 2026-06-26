@@ -13,6 +13,7 @@ export default function DashboardPage() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [compareMode, setCompareMode] = useState(false);
   const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -24,19 +25,32 @@ export default function DashboardPage() {
   );
   
   const fetchDocuments = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+
     try {
       const res = await fetch(`/api/documents`, {
-        credentials: "include"
+        credentials: "include",
+        signal: controller.signal
       });
       if (res.ok) {
         const data = await res.json();
         setDocuments(data.documents);
+        setErrorMsg(null);
       } else if (res.status === 401) {
          router.push("/login");
+      } else {
+         setErrorMsg(`Server returned error: ${res.status} ${res.statusText}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to fetch documents", err);
+      if (err.name === 'AbortError') {
+          setErrorMsg("Request timed out after 15 seconds. The server might be asleep or unreachable.");
+      } else {
+          setErrorMsg(err.message || "Network error occurred.");
+      }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -152,6 +166,12 @@ export default function DashboardPage() {
           {loading ? (
              <div className="flex items-center justify-center h-48">
                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+             </div>
+          ) : errorMsg ? (
+             <div className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-red-500/50 bg-red-500/10 rounded-xl p-6 text-center">
+                 <p className="text-red-500 font-bold mb-2">Connection Error</p>
+                 <p className="text-muted-foreground text-sm max-w-md">{errorMsg}</p>
+                 <button onClick={() => { setLoading(true); fetchDocuments(); }} className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md text-sm font-medium hover:bg-red-600 transition-colors">Retry Connection</button>
              </div>
           ) : documents.length === 0 ? (
              <div className="flex flex-col items-center justify-center h-48 border-2 border-dashed border-border rounded-xl">
