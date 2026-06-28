@@ -196,7 +196,7 @@ export function QuizModal({ isOpen, onClose, documentId }: QuizModalProps) {
               <div className="w-full bg-muted rounded-full h-2">
                 <div 
                   className="bg-purple-500 h-2 rounded-full transition-all duration-500"
-                  style={{ width: \`\${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%\` }}
+                  style={{ width: `${((currentQuestionIndex + 1) / quiz.questions.length) * 100}%` }}
                 />
               </div>
 

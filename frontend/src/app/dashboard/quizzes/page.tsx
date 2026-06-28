@@ -112,10 +112,9 @@ export default function QuizHistoryPage() {
                         <span className="truncate">{quiz.document.title}</span>
                       </div>
                     </div>
-                    
-                    <div className={\`w-14 h-14 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border \${quiz.score !== null ? 'group-hover:border-purple-500/50' : ''} transition-colors\`}>
-                      <span className={\`font-bold text-lg \${scoreColor}\`}>
-                        {quiz.score !== null ? \`\${quiz.score}/\${quiz.questions.length}\` : '-'}
+                    <div className={`w-14 h-14 rounded-full bg-muted flex items-center justify-center shrink-0 border border-border ${quiz.score !== null ? 'group-hover:border-purple-500/50' : ''} transition-colors`}>
+                      <span className={`font-bold text-lg ${scoreColor}`}>
+                        {quiz.score !== null ? `${quiz.score}/${quiz.questions.length}` : '-'}
                       </span>
                     </div>
                   </div>
