@@ -230,11 +230,11 @@ export function QuizModal({ isOpen, onClose, documentId }: QuizModalProps) {
                       className={btnClass}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={\`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-bold \${
+                        <div className={`w-6 h-6 rounded-full border flex items-center justify-center text-xs font-bold ${
                           isAnswerRevealed && idx === quiz.questions[currentQuestionIndex].correctAnswer 
                             ? 'border-green-500 bg-green-500 text-white' 
                             : (isAnswerRevealed && selectedOption === idx ? 'border-red-500 bg-red-500 text-white' : 'border-muted-foreground/30')
-                        }\`}>
+                        }`}>
                           {String.fromCharCode(65 + idx)}
                         </div>
                         <span className="flex-1 font-medium">{option}</span>
