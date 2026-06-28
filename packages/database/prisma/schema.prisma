@@ -80,6 +80,7 @@ model User {
   usageRecords    UsageRecord[]
   apiKeys         ApiKey[]
   documentChunks  DocumentChunk[]
+  quizzes         Quiz[]
 
   @@index([email])
   @@index([createdAt(sort: Desc)])
@@ -159,6 +160,7 @@ model Document {
   chunks          DocumentChunk[]
   tags            DocumentTag[]
   chatSessions    ChatSession[]
+  quizzes         Quiz[]
 
   @@index([userId])
   @@index([status])
@@ -333,4 +335,22 @@ model Jwks {
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@map("jwks")
+}
+
+model Quiz {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentId String   @map("document_id")
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  topic      String?
+  score      Int?     // Null if not completed yet
+  questions  Json     @db.JsonB // Array of questions
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([documentId])
+  @@index([updatedAt(sort: Desc)])
+  @@map("quizzes")
 }

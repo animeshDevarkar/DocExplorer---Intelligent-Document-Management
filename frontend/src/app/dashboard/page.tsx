@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UploadModal } from "@/components/upload-modal";
-import { FileText, Search, Plus, Settings, LogOut, MessageSquare, Loader2, Trash2, ArrowLeft } from "lucide-react";
+import { FileText, Search, Plus, Settings, LogOut, MessageSquare, Loader2, Trash2, ArrowLeft, Brain } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -113,6 +113,9 @@ export default function DashboardPage() {
           </button>
           <Link href="/dashboard/chats" className="flex items-center gap-3 px-3 py-2 hover:bg-muted text-muted-foreground hover:text-foreground rounded-md font-medium text-sm transition-colors">
             <MessageSquare className="w-4 h-4" /> Chat History
+          </Link>
+          <Link href="/dashboard/quizzes" className="flex items-center gap-3 px-3 py-2 hover:bg-muted text-muted-foreground hover:text-foreground rounded-md font-medium text-sm transition-colors">
+            <Brain className="w-4 h-4" /> Quiz History
           </Link>
           <Link href="/dashboard/settings" className="flex items-center gap-3 px-3 py-2 hover:bg-muted text-muted-foreground hover:text-foreground rounded-md font-medium text-sm transition-colors">
             <Settings className="w-4 h-4" /> Settings

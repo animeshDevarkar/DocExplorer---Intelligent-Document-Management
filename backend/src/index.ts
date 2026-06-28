@@ -54,6 +54,10 @@ app.route('/api/documents', documentsRouter)
 import { chatRouter } from './routes/chat.js'
 app.route('/api/chat', chatRouter)
 
+// Mount Quiz routes
+import { quizRouter } from './routes/quiz.js'
+app.route('/api/quiz', quizRouter)
+
 serve({
   fetch: app.fetch,
   port: 3001

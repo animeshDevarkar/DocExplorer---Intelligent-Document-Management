@@ -2,8 +2,9 @@
 
 import React, { useState, useRef, useEffect, use } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Send, FileText, ArrowLeft, Loader2, Bot, User } from "lucide-react";
+import { Send, FileText, ArrowLeft, Loader2, Bot, User, Brain } from "lucide-react";
 import Link from "next/link";
+import { QuizModal } from "@/components/quiz-modal";
 
 interface Message {
   id: string;
@@ -22,6 +23,7 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
   const [isHistoryLoading, setIsHistoryLoading] = useState(true);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [hasSummary, setHasSummary] = useState(false);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [documentUrl, setDocumentUrl] = useState<string | null>(null);
@@ -273,6 +275,15 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
                 <FileText className="w-4 h-4 sm:mr-1" />
                 <span className="hidden sm:inline">Summary</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setIsQuizOpen(true)}
+                className="h-10 px-3 shrink-0 bg-purple-600/10 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-lg flex items-center justify-center hover:bg-purple-600/20 transition-colors text-xs font-medium whitespace-nowrap"
+                title="Generate Quiz"
+              >
+                <Brain className="w-4 h-4 sm:mr-1" />
+                <span className="hidden sm:inline">Quiz</span>
+              </button>
               <button 
                 type="submit" 
                 disabled={!input.trim() || isLoading}
@@ -288,6 +299,12 @@ export default function DocumentChatPage({ params }: { params: Promise<{ id: str
           
         </div>
       </div>
+
+      <QuizModal 
+        isOpen={isQuizOpen} 
+        onClose={() => setIsQuizOpen(false)} 
+        documentId={documentId} 
+      />
     </div>
   );
 }
