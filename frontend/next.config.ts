@@ -30,6 +30,14 @@ const nextConfig: NextConfig = {
         destination: `${backendUrl}/api/users/:path+`,
       },
       {
+        source: '/api/quiz',
+        destination: `${backendUrl}/api/quiz`,
+      },
+      {
+        source: '/api/quiz/:path+',
+        destination: `${backendUrl}/api/quiz/:path+`,
+      },
+      {
         source: '/api/ping',
         destination: `${backendUrl}/api/ping`,
       }
