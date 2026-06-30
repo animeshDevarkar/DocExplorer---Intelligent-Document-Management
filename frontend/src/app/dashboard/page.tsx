@@ -32,7 +32,7 @@ export default function DashboardPage() {
   
   const fetchDocuments = async () => {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout for Render cold starts
 
     try {
       const res = await fetch(`/api/documents`, {
@@ -52,7 +52,7 @@ export default function DashboardPage() {
     } catch (err: any) {
       console.error("Failed to fetch documents", err);
       if (err.name === 'AbortError') {
-          setErrorMsg("Request timed out after 15 seconds. The server might be asleep or unreachable.");
+          setErrorMsg("Request timed out after 60 seconds. The server might be unreachable.");
       } else {
           setErrorMsg(err.message || "Network error occurred.");
       }
