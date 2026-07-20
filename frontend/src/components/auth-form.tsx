@@ -44,6 +44,13 @@ export function AuthForm() {
         });
         if (signUpError) throw new Error(signUpError.message || "Failed to create account.");
         
+        // Explicitly sign in after sign up to ensure session cookie is set
+        const { error: signInAfterError } = await signIn.email({
+            email,
+            password,
+        });
+        if (signInAfterError) throw new Error(signInAfterError.message || "Account created, but failed to auto-login.");
+        
         // Fire-and-forget backend warmup
         fetch('/api/ping').catch(() => {});
         
